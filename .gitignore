@@ -32,3 +32,5 @@ Thumbs.db
 # مخرجات مُولَّدة محليًا (تقارير، تصديرات)
 /out/
 *.local.json
+data/audit/*.sqlite3
+data/audit/*.sqlite3-*

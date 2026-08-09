@@ -18,6 +18,20 @@
 
 ---
 
+## Production API Controls
+
+For public deployment, copy `.env.example` and set at least:
+
+- `SHARIA_AI_API_KEYS` for API-key authentication on decision endpoints.
+- `SHARIA_AI_CORS_ALLOWED_ORIGINS` for explicit browser origins.
+- `SHARIA_AI_RATE_LIMIT_PER_MINUTE` to bound per-client request volume.
+- `SHARIA_AI_MAX_CONTRACT_CHARS` to reject oversized contract payloads.
+- `SHARIA_AI_AUDIT_LOG_PATH` to persist compliance decisions in SQLite.
+
+The legacy endpoints remain available, and versioned aliases are exposed under `/v1/...` for backward-compatible API evolution.
+
+---
+
 ## نبذة عامة
 
 **Sharia-AI** منصة مفتوحة المصدر، بُنيت لمعالجة مشكلة تقنية حقيقية وليست افتراضية: غياب أدوات **مفتوحة، قابلة للتدقيق، وقابلة للتفسير** للتحقق من الامتثال الشرعي للشركات والعقود والأصول المالية — خصوصًا في أسواق منطقة الشرق الأوسط وشمال أفريقيا (MENA).

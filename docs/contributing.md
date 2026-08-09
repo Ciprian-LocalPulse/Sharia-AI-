@@ -36,7 +36,7 @@
 ## سير العمل التقني
 
 ```bash
-git clone https://github.com/your-org/sharia-fintech-ai.git
+git clone https://github.com/Ciprian-LocalPulse/sharia-ai.git
 cd sharia-fintech-ai
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"

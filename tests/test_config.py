@@ -14,6 +14,7 @@ class TestAppConfigDefaults(unittest.TestCase):
             "SHARIA_AI_GOLD_PRICE_PER_GRAM",
             "SHARIA_AI_SILVER_PRICE_PER_GRAM",
             "SHARIA_AI_CURRENCY",
+            "SHARIA_AI_RATE_LIMIT_PER_MINUTE",
         ):
             self._env_backup[key] = os.environ.pop(key, None)
 
@@ -59,6 +60,9 @@ class TestAppConfigFromEnv(unittest.TestCase):
                 "SHARIA_AI_SILVER_PRICE_PER_GRAM"
             ),
             "SHARIA_AI_CURRENCY": os.environ.get("SHARIA_AI_CURRENCY"),
+            "SHARIA_AI_RATE_LIMIT_PER_MINUTE": os.environ.get(
+                "SHARIA_AI_RATE_LIMIT_PER_MINUTE"
+            ),
         }
 
     def tearDown(self):
@@ -91,6 +95,20 @@ class TestAppConfigFromEnv(unittest.TestCase):
 
         reloaded = importlib.reload(config_module)
         self.assertAlmostEqual(reloaded.config.gold_price_per_gram, 75.0)
+
+    def test_env_overrides_rate_limit(self):
+        os.environ["SHARIA_AI_RATE_LIMIT_PER_MINUTE"] = "42"
+        import sharia_ai.utils.config as config_module
+
+        reloaded = importlib.reload(config_module)
+        self.assertEqual(reloaded.config.rate_limit_per_minute, 42)
+
+    def test_invalid_env_int_falls_back_to_default(self):
+        os.environ["SHARIA_AI_RATE_LIMIT_PER_MINUTE"] = "not-a-number"
+        import sharia_ai.utils.config as config_module
+
+        reloaded = importlib.reload(config_module)
+        self.assertEqual(reloaded.config.rate_limit_per_minute, 120)
 
 
 if __name__ == "__main__":

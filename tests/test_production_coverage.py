@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 from unittest.mock import patch
 
 from fastapi import HTTPException
@@ -23,8 +24,8 @@ class FakeClassifier:
         return []
 
 
-def _company(**overrides) -> CompanyFinancials:
-    payload = {
+def _company(**overrides: Any) -> CompanyFinancials:
+    payload: dict[str, Any] = {
         "name": "شركة الاختبار",
         "sector": "retail",
         "market_cap": 1_000_000.0,
