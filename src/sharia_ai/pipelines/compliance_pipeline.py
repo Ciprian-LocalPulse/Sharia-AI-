@@ -1,16 +1,18 @@
 """
-compliance_pipeline.py — Orchestrarea end-to-end a fluxului de conformitate
-Sharia pentru o companie: screening de echitate + screening de contracte +
-(opțional) calcul Zakat, agregate într-un raport unic, exportabil (dict/JSON).
+compliance_pipeline.py — التنسيق الشامل لتدفق الامتثال الشرعي لشركة
+واحدة: فرز الأسهم + فرز العقود + (اختياري) حساب الزكاة، مُجمَّعة في
+تقرير موحّد، قابل للتصدير (dict/JSON).
 
-Acesta este stratul pe care se construiește API-ul (vezi api/main.py) și
-orice integrare externă (dashboard, ERP, sistem de audit).
+هذه هي الطبقة التي تُبنى عليها الواجهة البرمجية (راجع api/main.py) وأي
+تكامل خارجي (لوحة تحكم، نظام تخطيط موارد المؤسسات، نظام تدقيق).
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
 from ..nlp.riba_detector import DetectionReport, HybridContractScreener
@@ -32,7 +34,7 @@ class CompanyComplianceReport:
 
 
 def asdict_safe(report: CompanyComplianceReport) -> dict:
-    """Convertește raportul (inclusiv enum-uri și obiecte imbricate) într-un dict serializabil."""
+    """يحوّل التقرير (بما في ذلك التعدادات والكائنات المتداخلة) إلى قاموس قابل للتسلسل."""
 
     def convert(obj):
         if isinstance(obj, dict):
@@ -42,7 +44,7 @@ def asdict_safe(report: CompanyComplianceReport) -> dict:
         if hasattr(obj, "__dataclass_fields__"):
             return {k: convert(v) for k, v in asdict(obj, dict_factory=dict).items()}
         if hasattr(obj, "value") and not isinstance(obj, (int, float, str)):
-            # Enum
+            # تعداد (Enum)
             return obj.value
         return obj
 
@@ -50,7 +52,7 @@ def asdict_safe(report: CompanyComplianceReport) -> dict:
 
 
 class ShariaCompliancePipeline:
-    """Punctul central de orchestrare — instanțiază și rulează toate modulele."""
+    """نقطة التنسيق المركزية — تُنشئ وتشغّل جميع الوحدات."""
 
     def __init__(
         self,
@@ -98,7 +100,7 @@ class ShariaCompliancePipeline:
         contract_results: dict[str, DetectionReport] | None,
     ) -> str:
         if not equity_result.is_compliant:
-            return "NECONFORM — eșec la screening de echitate"
+            return "غير متوافق — فشل في فرز الأسهم"
 
         if contract_results:
             high_confidence_flags = [
@@ -108,6 +110,6 @@ class ShariaCompliancePipeline:
                 if f.confidence >= 0.85
             ]
             if high_confidence_flags:
-                return "NECESITĂ REVIZUIRE — clauze contractuale cu risc ridicat detectate"
+                return "يتطلب مراجعة — تم اكتشاف بنود تعاقدية عالية الخطورة"
 
-        return "CONFORM (sub rezerva revizuirii comitetului Sharia)"
+        return "متوافق (خاضع لمراجعة هيئة الرقابة الشرعية)"

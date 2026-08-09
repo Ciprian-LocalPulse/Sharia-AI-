@@ -1,7 +1,7 @@
 name,sector,market_cap,interest_bearing_debt,cash_and_interest_bearing_deposits,accounts_receivable,total_revenue,haram_revenue
-Al-Noor Retail Group,retail,50000000,12000000,8000000,15000000,40000000,500000
-Gulf Steel Manufacturing,industrials,120000000,50000000,10000000,20000000,90000000,0
-Levant Conventional Bank,conventional_banking,300000000,0,0,0,60000000,0
-Nile Tech Solutions,technology,25000000,3000000,2000000,4000000,18000000,0
-Desert Rose Hospitality,hospitality,40000000,20000000,15000000,10000000,30000000,1200000
-Crescent Gaming Ltd,gambling,15000000,1000000,500000,500000,10000000,10000000
+مجموعة النور للتجزئة,retail,50000000,12000000,8000000,15000000,40000000,500000
+شركة الخليج للصناعات الفولاذية,industrials,120000000,50000000,10000000,20000000,90000000,0
+بنك الشام التقليدي,conventional_banking,300000000,0,0,0,60000000,0
+شركة النيل للحلول التقنية,technology,25000000,3000000,2000000,4000000,18000000,0
+مجموعة وردة الصحراء للضيافة,hospitality,40000000,20000000,15000000,10000000,30000000,1200000
+شركة الهلال للألعاب,gambling,15000000,1000000,500000,500000,10000000,10000000

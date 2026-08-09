@@ -1,7 +1,9 @@
 """
-config.py — Configurare centralizată, citită din variabile de mediu cu
-valori implicite sigure. Evită hardcodarea parametrilor financiari
-sensibili (prețuri metal, praguri) direct în cod.
+config.py — تهيئة مركزية، تُقرأ من متغيرات البيئة مع قيم افتراضية
+آمنة. تتجنّب الترميز الثابت للمعاملات المالية الحساسة (أسعار المعادن،
+العتبات) مباشرة في الكود.
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from __future__ import annotations

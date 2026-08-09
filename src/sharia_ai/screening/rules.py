@@ -1,15 +1,16 @@
 """
-rules.py — Praguri de conformitate Sharia pentru screening de echitate.
+rules.py — عتبات الامتثال الشرعي لفرز الأسهم.
 
-Sursă metodologică (rezumat, nu reproducere textuală):
-    - AAOIFI Shari'ah Standard No. 21 (Financial Paper - Shares/Bonds)
-    - Dow Jones Islamic Market (DJIM) Index Methodology
-    - FTSE Shariah Global Equity Index Series — Ground Rules
+المصدر المنهجي (ملخّص، وليس استنساخًا حرفيًا):
+    - معيار الشريعة رقم 21 لهيئة AAOIFI (الأوراق المالية - الأسهم/السندات)
+    - منهجية مؤشر داو جونز الإسلامي (DJIM)
+    - قواعد سلسلة مؤشرات FTSE Shariah العالمية للأسهم
 
-Aceste praguri sunt CONFIGURABILE. Ele reprezintă interpretări comune,
-nu o fatwa. Orice utilizare instituțională trebuie validată de un
-comitet Sharia acreditat (Sharia Supervisory Board) înainte de a fi
-folosită în decizii de investiție reale.
+هذه العتبات **قابلة للتهيئة**. إنها تمثّل تفسيرات شائعة في الصناعة،
+وليست فتوى. يجب أن يخضع أي استخدام مؤسسي للتحقق من قبل هيئة رقابة
+شرعية معتمدة قبل استخدامها في قرارات استثمار حقيقية.
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from dataclasses import dataclass
@@ -17,38 +18,38 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ScreeningThresholds:
-    """Praguri procentuale (exprimate ca fracție, ex: 0.33 = 33%)."""
+    """عتبات نسبية (مُعبَّر عنها كجزء عشري، مثال: 0.33 = 33%)."""
 
-    # Screening de business (activitate primară — excludere sectorială)
-    max_haram_revenue_ratio: float = 0.05  # venit din activități interzise / venit total
+    # فرز النشاط التجاري (النشاط الأساسي — الاستبعاد القطاعي)
+    max_haram_revenue_ratio: float = 0.05  # الدخل من أنشطة محظورة / إجمالي الدخل
 
-    # Screening financiar (rate financiare)
-    max_debt_to_market_cap: float = 0.33          # datorie purtătoare de dobândă / capitalizare bursieră
-    max_cash_interest_to_market_cap: float = 0.33  # numerar + depozite purtătoare de dobândă / cap. bursieră
-    max_receivables_to_market_cap: float = 0.49    # creanțe + numerar / cap. bursieră (unele metodologii: activ total)
+    # الفرز المالي (النسب المالية)
+    max_debt_to_market_cap: float = 0.33          # الديون التي تحمل فائدة / القيمة السوقية
+    max_cash_interest_to_market_cap: float = 0.33  # النقد + الودائع التي تحمل فائدة / القيمة السوقية
+    max_receivables_to_market_cap: float = 0.49    # الذمم المدينة + النقد / القيمة السوقية (بعض المنهجيات: إجمالي الأصول)
 
-    # Purificare venit (dividend purification) — venit non-permis / venit total
+    # تنقية الدخل (تطهير الأرباح الموزعة) — الدخل غير المسموح / إجمالي الدخل
     purification_threshold: float = 0.05
 
 
-# Sectoare de activitate excluse implicit (haram prin natura activității).
-# Lista este intenționat editabilă — companiile își pot extinde/restrânge
-# taxonomia în funcție de comitetul Sharia propriu.
+# القطاعات المستبعدة افتراضيًا (حرام بطبيعة النشاط).
+# هذه القائمة قابلة للتعديل عمدًا — يمكن للشركات توسيع/تقليص
+# التصنيف وفقًا لهيئتها الشرعية الخاصة.
 EXCLUDED_SECTORS = {
-    "alcohol": "Producție/distribuție de băuturi alcoolice",
-    "gambling": "Jocuri de noroc și pariuri (maysir)",
-    "conventional_banking": "Bănci și instituții financiare convenționale (bazate pe dobândă/riba)",
-    "conventional_insurance": "Asigurări convenționale (non-Takaful)",
-    "pork": "Producție/procesare carne de porc și derivate",
-    "adult_entertainment": "Divertisment pentru adulți / pornografie",
-    "tobacco": "Producție de tutun (interpretare majoritară: haram/makruh sever)",
-    "weapons_controversial": "Armament controversat / neconvențional",
-    "media_immoral": "Media care promovează conținut imoral ca activitate primară",
+    "alcohol": "إنتاج/توزيع المشروبات الكحولية",
+    "gambling": "القمار والمراهنات (الميسر)",
+    "conventional_banking": "البنوك والمؤسسات المالية التقليدية (القائمة على الفائدة/الربا)",
+    "conventional_insurance": "التأمين التقليدي (غير التكافل)",
+    "pork": "إنتاج/معالجة لحم الخنزير ومشتقاته",
+    "adult_entertainment": "الترفيه للبالغين / المواد الإباحية",
+    "tobacco": "إنتاج التبغ (التفسير السائد: حرام/مكروه شديد)",
+    "weapons_controversial": "الأسلحة المثيرة للجدل / غير التقليدية",
+    "media_immoral": "الإعلام الذي يروّج لمحتوى غير أخلاقي كنشاط أساسي",
 }
 
-# Nisab de referință (praguri clasice, în grame de metal — valoarea monetară
-# se calculează dinamic pe baza prețului curent al metalului).
-NISAB_GOLD_GRAMS = 85.0     # ~85g aur (echivalent 20 mithqal)
-NISAB_SILVER_GRAMS = 595.0  # ~595g argint (echivalent 200 dirham)
+# نصاب مرجعي (عتبات كلاسيكية، بالغرامات من المعدن — تُحسب القيمة النقدية
+# ديناميكيًا استنادًا إلى السعر الحالي للمعدن).
+NISAB_GOLD_GRAMS = 85.0     # ~85 غرامًا من الذهب (يعادل 20 مثقالًا)
+NISAB_SILVER_GRAMS = 595.0  # ~595 غرامًا من الفضة (يعادل 200 درهم)
 
-ZAKAT_RATE = 0.025  # 2.5% asupra activelor eligibile care depășesc Nisab, deținute 1 an lunar (hawl)
+ZAKAT_RATE = 0.025  # 2.5% على الأصول المؤهَّلة التي تتجاوز النصاب، محتفَظ بها لمدة حول (سنة قمرية)

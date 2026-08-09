@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sharia-ai"
 version = "0.1.0"
-description = "Toolkit open-source de date & AI pentru conformitate fintech Sharia-compliant (screening de echitate, detecție riba/gharar/maysir în contracte arabe, calcul Zakat)."
+description = "مجموعة أدوات مفتوحة المصدر للبيانات والذكاء الاصطناعي من أجل الامتثال في التقنية المالية المتوافقة مع الشريعة (فرز الأسهم، كشف الربا/الغرر/الميسر في العقود العربية، حساب الزكاة)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
@@ -57,9 +57,9 @@ data = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Ciprian-LocalPulse/sharia-fintech-ai"
-Documentation = "https://github.com/Ciprian-LocalPulse/sharia-fintech-ai/tree/main/docs"
-Issues = "https://github.com/Ciprian-LocalPulse/sharia-fintech-ai/issues"
+Homepage = "https://github.com/your-org/sharia-fintech-ai"
+Documentation = "https://github.com/your-org/sharia-fintech-ai/tree/main/docs"
+Issues = "https://github.com/your-org/sharia-fintech-ai/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

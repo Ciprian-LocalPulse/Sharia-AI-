@@ -1,70 +1,64 @@
-# Cod de Conduită al Contribuitorilor
+# مدونة سلوك المساهمين
 
-## Angajamentul nostru
+**المؤلف: Ciprian Ștefan Pleșca**
 
-În calitate de membri, contribuitori și lideri, ne angajăm să facem
-participarea în comunitatea noastră o experiență lipsită de hărțuire
-pentru toată lumea, indiferent de vârstă, dimensiune corporală, dizabilitate
-vizibilă sau invizibilă, etnie, caracteristici sexuale, identitate și
-exprimare de gen, nivel de experiență, educație, statut socio-economic,
-naționalitate, aspect personal, rasă, religie, sau identitate și
-orientare sexuală.
+## التزامنا
 
-Dat fiind subiectul acestui proiect — instrumente pentru conformitate
-financiară islamică — ne angajăm în mod explicit să menținem un spațiu
-respectuos pentru discuții privind interpretarea jurisprudențială (fiqh),
-recunoscând că există diversitate legitimă de opinie între școlile
-juridice și comitetele Sharia.
+بصفتنا أعضاءً ومساهمين وقادة، نلتزم بجعل المشاركة في مجتمعنا تجربة
+خالية من المضايقات للجميع، بغض النظر عن العمر أو حجم الجسم أو الإعاقة
+الظاهرة أو الخفية أو العرق أو الخصائص الجنسية أو الهوية الجندرية
+والتعبير عنها أو مستوى الخبرة أو التعليم أو الوضع الاجتماعي والاقتصادي
+أو الجنسية أو المظهر الشخصي أو العرق أو الدين أو الهوية والتوجه
+الجنسي.
 
-## Standardele noastre
+نظرًا لموضوع هذا المشروع — أدوات للامتثال المالي الإسلامي — نلتزم
+صراحة بالحفاظ على مساحة محترمة للنقاشات المتعلقة بالتفسير الفقهي،
+مُدرِكين وجود تنوّع مشروع في الآراء بين المذاهب الفقهية وهيئات الرقابة
+الشرعية.
 
-Exemple de comportament care contribuie la un mediu pozitiv:
+## معاييرنا
 
-- Demonstrarea empatiei și bunătății față de ceilalți
-- Respectarea opiniilor, punctelor de vedere și experiențelor diferite,
-  inclusiv a interpretărilor jurisprudențiale diferite
-- Oferirea și acceptarea cu grație a feedback-ului constructiv
-- Asumarea responsabilității și cererea de scuze celor afectați de
-  greșelile noastre
-- Concentrarea pe ce este mai bine nu doar pentru noi ca indivizi, ci
-  pentru comunitate în ansamblu
+أمثلة على السلوك الذي يساهم في بيئة إيجابية:
 
-Exemple de comportament inacceptabil:
+- إظهار التعاطف واللطف تجاه الآخرين
+- احترام الآراء ووجهات النظر والتجارب المختلفة، بما في ذلك التفسيرات
+  الفقهية المختلفة
+- تقديم وقبول الملاحظات البنّاءة بروح طيبة
+- تحمّل المسؤولية والاعتذار لمن تأثروا بأخطائنا
+- التركيز على ما هو أفضل ليس فقط لنا كأفراد، بل للمجتمع ككل
 
-- Limbaj sau imagini sexualizate, atenție sau avansuri sexuale de orice fel
-- Trolling, comentarii insultătoare/derogatorii, atacuri personale sau politice
-- Hărțuire publică sau privată
-- Publicarea informațiilor private ale altora fără permisiune explicită
-- Afirmarea unei singure interpretări jurisprudențiale ca fiind singura
-  validă, într-un mod disprețuitor față de alte școli de gândire
-  recunoscute
-- Alte conduite care ar putea fi considerate rezonabil necorespunzătoare
-  într-un context profesional
+أمثلة على السلوك غير المقبول:
 
-## Responsabilități de aplicare
+- استخدام لغة أو صور ذات طابع جنسي، أو اهتمام أو تقدّم جنسي من أي نوع
+- التصيّد، التعليقات المهينة/التحقيرية، الهجمات الشخصية أو السياسية
+- المضايقة العلنية أو الخاصة
+- نشر معلومات خاصة بالآخرين دون إذن صريح
+- تأكيد تفسير فقهي واحد باعتباره الوحيد الصحيح، بطريقة تحقّر مذاهب
+  فكرية أخرى معترف بها
+- سلوكيات أخرى يمكن اعتبارها بشكل معقول غير لائقة في سياق مهني
 
-Liderii comunității sunt responsabili pentru clarificarea și aplicarea
-standardelor noastre de comportament acceptabil și vor lua măsuri
-corective adecvate și corecte ca răspuns la orice comportament pe care îl
-consideră necorespunzător, amenințător, ofensator sau dăunător.
+## مسؤوليات الإنفاذ
 
-## Domeniu de aplicare
+قادة المجتمع مسؤولون عن توضيح وإنفاذ معايير السلوك المقبول لدينا،
+وسيتخذون إجراءات تصحيحية مناسبة وعادلة استجابةً لأي سلوك يعتبرونه غير
+لائق أو تهديديًا أو مسيئًا أو ضارًا.
 
-Acest Cod de Conduită se aplică în toate spațiile comunității proiectului
-(GitHub Issues, Pull Requests, discuții) și se aplică și atunci când o
-persoană reprezintă oficial comunitatea în spații publice.
+## النطاق
 
-## Aplicare
+تنطبق مدونة السلوك هذه على جميع مساحات مجتمع المشروع (قضايا GitHub،
+طلبات السحب، النقاشات) وتنطبق أيضًا عندما يمثّل شخص ما المجتمع رسميًا
+في مساحات عامة.
 
-Cazurile de comportament abuziv, de hărțuire sau altfel inacceptabil pot
-fi raportate prin deschiderea unui GitHub Issue confidențial adresat
-menținătorilor proiectului, sau prin canalul de contact listat în
-profilul organizației GitHub.
+## الإنفاذ
 
-## Atribuire
+يمكن الإبلاغ عن حالات السلوك المسيء أو المضايقة أو غير المقبول بطريقة
+أخرى من خلال فتح قضية (Issue) سرّية على GitHub موجّهة لمشرفي المشروع،
+أو عبر قناة الاتصال المُدرَجة في ملف تعريف المؤسسة على GitHub.
 
-Acest Cod de Conduită este adaptat din [Contributor Covenant][homepage],
-versiunea 2.1, disponibilă la
+## الإسناد
+
+تم تكييف مدونة السلوك هذه من [Contributor Covenant][homepage]، الإصدار
+2.1، المتاح على
 https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
 
 [homepage]: https://www.contributor-covenant.org

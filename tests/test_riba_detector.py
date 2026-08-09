@@ -24,13 +24,13 @@ class TestLexicalRibaDetector(unittest.TestCase):
         self.assertFalse(report.has_concerns)
 
     def test_no_false_positive_on_profits_word(self):
-        # 'الأرباح' (profituri) NU trebuie confundat cu 'ربا' (riba) ca substring
+        # 'الأرباح' (الأرباح) يجب ألا تُخلط بـ 'ربا' كسلسلة فرعية
         text = "يتفق الطرفان على تقاسم الأرباح والخسائر بنسب محددة سلفًا."
         report = self.detector.analyze(text)
         self.assertFalse(report.has_concerns)
 
     def test_detects_riba_with_attached_preposition(self):
-        # 'بفائدة' = 'ب' (cu) + 'فائدة' (dobândă), fără spațiu — clitic arab uzual
+        # 'بفائدة' = 'ب' (حرف جر) + 'فائدة'، دون فراغ — لاصقة نحوية عربية شائعة
         text = "يُسدد القرض بفائدة سنوية."
         report = self.detector.analyze(text)
         self.assertIn(ConcernCategory.RIBA, report.categories_found)

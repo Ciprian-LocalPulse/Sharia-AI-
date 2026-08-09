@@ -1,49 +1,51 @@
-# Roadmap
+# خارطة الطريق
 
-## v0.1 (curent — alpha)
+**المؤلف: Ciprian Ștefan Pleșca**
 
-- [x] Screening de echitate bazat pe reguli AAOIFI/DJIM configurabile
-- [x] Detector lexical riba/gharar/maysir pentru arabă, offline, cu
-      gestionare corectă a clitic-elor și fără falsuri pozitive pe
-      omonime cunoscute (ex: ربا vs. الأرباح)
-- [x] Calculator Zakat cu Nisab dinamic (aur/argint)
-- [x] Pipeline de orchestrare end-to-end + export JSON auditabil
-- [x] API REST (FastAPI) cu documentație interactivă
-- [x] Suită de teste unitare (16 teste, 100% offline, stdlib)
+## الإصدار 0.1 (الحالي — ألفا)
 
-## v0.2 (planificat)
+- [x] فرز الأسهم القائم على قواعد AAOIFI/DJIM القابلة للتهيئة
+- [x] كاشف معجمي للربا/الغرر/الميسر باللغة العربية، غير متصل بالإنترنت،
+      مع معالجة صحيحة للواصق النحوية وبدون إيجابيات كاذبة على متجانسات
+      معروفة (مثل ربا مقابل الأرباح)
+- [x] حاسبة زكاة بنصاب ديناميكي (ذهب/فضة)
+- [x] خط تنسيق شامل + تصدير JSON قابل للتدقيق
+- [x] واجهة برمجة REST (FastAPI) مع توثيق تفاعلي
+- [x] مجموعة اختبارات وحدة (16 اختبارًا، غير متصلة بالكامل، مكتبة قياسية)
 
-- [ ] **Autentificare API** — API keys / OAuth2 pentru expunere multi-tenant
-- [ ] **Model ML pentru scoring semantic** — integrare AraBERT/CAMeLBERT
-      fine-tuned prin `RibaClassifierProtocol`, cu set de date de
-      antrenament adnotat de juriști
-- [ ] **Suport Sukuk** — screening de conformitate pentru structuri de
-      obligațiuni islamice (Ijara, Murabaha, Mudaraba Sukuk)
-- [ ] **Suport Takaful** — modul dedicat pentru asigurări islamice
-      (separare fond participanți / fond operator)
-- [ ] **Export PDF** — rapoarte de conformitate formatate profesional,
-      pentru arhivare/audit extern
+## الإصدار 0.2 (مخطَّط)
 
-## v0.3 (explorare)
+- [ ] **مصادقة الواجهة البرمجية** — مفاتيح API / OAuth2 للكشف متعدد
+      المستأجرين
+- [ ] **نموذج تعلّم آلة للتقييم الدلالي** — دمج AraBERT/CAMeLBERT
+      مُدرَّب عبر `RibaClassifierProtocol`، مع مجموعة بيانات تدريب
+      معلَّقة من قبل فقهاء
+- [ ] **دعم الصكوك** — فرز امتثال لهياكل السندات الإسلامية (إجارة،
+      مرابحة، صكوك مضاربة)
+- [ ] **دعم التكافل** — وحدة مخصّصة للتأمين الإسلامي (فصل صندوق
+      المشتركين / صندوق المُشغِّل)
+- [ ] **تصدير PDF** — تقارير امتثال منسَّقة باحترافية، للأرشفة/التدقيق
+      الخارجي
 
-- [ ] Dashboard web (React) pentru vizualizarea rapoartelor de conformitate
-- [ ] Conectori pentru burse din regiunea MENA (Tadawul, DFM, ADX) —
-      ingestie automată de date financiare pentru screening batch
-- [ ] Suport multi-limbă pentru interfața de raportare (arabă, engleză,
-      franceză)
-- [ ] Bibliotecă extinsă de clauze contractuale adnotate (open dataset)
-      pentru cercetare academică în NLP juridic arab
+## الإصدار 0.3 (استكشافي)
 
-## Principii care ghidează prioritizarea
+- [ ] لوحة تحكم ويب (React) لتصور تقارير الامتثال
+- [ ] موصلات لأسواق منطقة الشرق الأوسط وشمال أفريقيا (تداول، سوق دبي
+      المالي، سوق أبوظبي) — استيعاب تلقائي لبيانات مالية لفرز دفعي
+- [ ] دعم متعدد اللغات لواجهة التقارير (العربية، الإنجليزية، الفرنسية)
+- [ ] مكتبة موسّعة من بنود العقود المُعلَّقة (مجموعة بيانات مفتوحة)
+      للبحث الأكاديمي في معالجة اللغة القانونية العربية الطبيعية
 
-1. Explicabilitatea nu se sacrifică niciodată pentru acoperire mai mare.
-2. Orice funcționalitate nouă legată de interpretare Sharia necesită
-   review din partea unui contribuitor cu background în jurisprudență
-   islamică sau citarea unei surse metodologice recunoscute.
-3. Nucleul rămâne utilizabil offline — dependențele grele (modele ML,
-   servicii cloud) sunt întotdeauna opționale, niciodată obligatorii.
+## المبادئ الموجِّهة لتحديد الأولويات
 
-## Cum propui o schimbare de prioritate
+1. لا تُضحَّى قابلية التفسير أبدًا من أجل تغطية أوسع.
+2. تتطلب أي وظيفة جديدة مرتبطة بالتفسير الشرعي مراجعة من مساهم ذي
+   خلفية في الفقه الإسلامي أو الاستشهاد بمصدر منهجي معترف به.
+3. تبقى النواة قابلة للاستخدام دون اتصال بالإنترنت — الاعتماديات
+   الثقيلة (نماذج تعلّم آلة، خدمات سحابية) اختيارية دائمًا، وليست
+   إلزامية أبدًا.
 
-Deschide un GitHub Issue cu eticheta `roadmap`, descriind problema de
-business pe care o rezolvă și, dacă e relevant, referința metodologică.
+## كيفية اقتراح تغيير في الأولويات
+
+افتح قضية (Issue) على GitHub بوسم `roadmap`، تصف المشكلة التجارية التي
+تحلّها، وإذا كان ذا صلة، المرجع المنهجي.

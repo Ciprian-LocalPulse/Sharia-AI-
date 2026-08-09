@@ -1,17 +1,19 @@
 """
-main.py — API REST (FastAPI) pentru toolkit-ul Sharia-AI.
+main.py — واجهة برمجية REST (FastAPI) لمجموعة أدوات Sharia-AI.
 
-Expune trei categorii de endpoint-uri:
-    POST /screening/equity      — screening de conformitate pentru o companie
-    POST /screening/contract    — detecție riba/gharar/maysir într-un text arab
-    POST /zakat/calculate       — calcul Zakat pe active declarate
-    POST /compliance/report     — raport agregat (pipeline complet)
+تكشف ثلاث فئات من نقاط النهاية (endpoints):
+    POST /screening/equity      — فرز الامتثال لشركة معينة
+    POST /screening/contract    — كشف الربا/الغرر/الميسر في نص عربي
+    POST /zakat/calculate       — حساب الزكاة على أصول مُصرَّح بها
+    POST /compliance/report     — تقرير مُجمَّع (خط المعالجة الكامل)
 
-Rulare locală:
+التشغيل المحلي:
     pip install -r requirements.txt
     uvicorn sharia_ai.api.main:app --reload
 
-Documentație interactivă generată automat: http://localhost:8000/docs
+توثيق تفاعلي يُولَّد تلقائيًا: http://localhost:8000/docs
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from __future__ import annotations
@@ -29,9 +31,9 @@ app = FastAPI(
     title=config.api_title,
     version=config.api_version,
     description=(
-        "Toolkit open-source de date & AI pentru conformitate fintech "
-        "Sharia-compliant. Instrument de triaj/asistență — nu înlocuiește "
-        "avizul unui comitet Sharia acreditat."
+        "مجموعة أدوات مفتوحة المصدر للبيانات والذكاء الاصطناعي من أجل "
+        "الامتثال في التقنية المالية المتوافقة مع الشريعة. أداة فرز أولي/"
+        "مساعدة — لا تحل محل رأي هيئة رقابة شرعية معتمدة."
     ),
 )
 
@@ -39,11 +41,11 @@ _equity_screener = EquityScreener()
 _contract_screener = HybridContractScreener()
 
 
-# ---------- Scheme Pydantic ----------
+# ---------- مخططات Pydantic ----------
 
 class CompanyFinancialsIn(BaseModel):
     name: str
-    sector: str = Field(..., description="Cheie sector, vezi screening/rules.py -> EXCLUDED_SECTORS")
+    sector: str = Field(..., description="مفتاح القطاع، راجع screening/rules.py -> EXCLUDED_SECTORS")
     market_cap: float
     interest_bearing_debt: float
     cash_and_interest_bearing_deposits: float
@@ -53,7 +55,7 @@ class CompanyFinancialsIn(BaseModel):
 
 
 class ContractTextIn(BaseModel):
-    text: str = Field(..., description="Text contractual în limba arabă")
+    text: str = Field(..., description="نص تعاقدي باللغة العربية")
 
 
 class ZakatAssetsIn(BaseModel):
@@ -73,7 +75,7 @@ class ComplianceReportIn(BaseModel):
     zakat_assets: ZakatAssetsIn | None = None
 
 
-# ---------- Endpoint-uri ----------
+# ---------- نقاط النهاية (Endpoints) ----------
 
 @app.get("/health")
 def health() -> dict:

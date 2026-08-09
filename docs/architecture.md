@@ -1,31 +1,32 @@
-# Arhitectură
+# البنية المعمارية
 
-## Filosofie de proiectare
+**المؤلف: Ciprian Ștefan Pleșca**
 
-Sharia-AI este construit pe patru principii, în această ordine de prioritate:
+## فلسفة التصميم
 
-1. **Explicabilitate înaintea acurateții brute.** Un scor de conformitate
-   fără justificare regulă-cu-regulă este inutil pentru un comitet Sharia
-   care trebuie să-și motiveze deciziile. De aceea fiecare rezultat
-   (`ScreeningResult`, `DetectionReport`, `ZakatResult`) expune fiecare
-   verificare individuală, nu doar un verdict agregat.
-2. **Funcționare offline ca implicit.** Instituțiile financiare operează
-   frecvent în medii izolate (air-gapped) sau cu cerințe stricte de
-   reziden ță a datelor. Nucleul (`screening`, `nlp`, `zakat`, `pipelines`)
-   folosește exclusiv biblioteca standard Python — nicio dependență externă
-   obligatorie pentru logica de bază.
-3. **Extensibilitate fără rescriere.** Straturile ML (ex: un clasificator
-   transformer pentru arabă) se conectează prin interfețe (`Protocol`), nu
-   prin moștenire rigidă — vezi `RibaClassifierProtocol`.
-4. **Configurare, nu hardcodare.** Toate pragurile financiare (rate de
-   îndatorare, Nisab, rata Zakat) sunt parametri, nu constante îngropate
-   în logică — vezi `screening/rules.py` și `data/rules/aaoifi_thresholds.yaml`.
+بُنِيَ Sharia-AI على أربعة مبادئ، مرتّبة بهذا الترتيب من حيث الأولوية:
 
-## Diagrama componentelor
+1. **قابلية التفسير قبل الدقة الخام.** درجة امتثال بلا تبرير قاعدة
+   بقاعدة عديمة الفائدة لهيئة رقابة شرعية يجب أن تبرر قراراتها. لذلك
+   يكشف كل نتيجة (`ScreeningResult`، `DetectionReport`، `ZakatResult`)
+   عن كل فحص فردي، وليس مجرد حكم مُجمَّع.
+2. **العمل دون اتصال بالإنترنت كخيار افتراضي.** تعمل المؤسسات المالية
+   غالبًا في بيئات معزولة (air-gapped) أو بمتطلبات صارمة لبقاء
+   البيانات ضمن حدود جغرافية معينة. تستخدم النواة (`screening`،
+   `nlp`، `zakat`، `pipelines`) فقط مكتبة بايثون القياسية — لا اعتماد
+   خارجي إلزامي للمنطق الأساسي.
+3. **قابلية التوسع دون إعادة الكتابة.** تتصل طبقات تعلّم الآلة (مثل
+   مصنّف تحويلي للعربية) عبر واجهات (`Protocol`)، وليس عبر وراثة
+   جامدة — راجع `RibaClassifierProtocol`.
+4. **التهيئة، لا الترميز الثابت.** جميع العتبات المالية (نسب
+   المديونية، النصاب، معدّل الزكاة) معاملات، وليست ثوابت مُدمجة في
+   المنطق — راجع `screening/rules.py` و`data/rules/aaoifi_thresholds.yaml`.
+
+## مخطط المكوّنات
 
 ```
                         ┌─────────────────────────┐
-                        │   API REST (FastAPI)    │
+                        │  واجهة برمجية REST (FastAPI) │
                         │      api/main.py        │
                         └────────────┬────────────┘
                                      │
@@ -43,14 +44,14 @@ Sharia-AI este construit pe patru principii, în această ordine de prioritate:
    └─────────┬─────────┘                                  │
              │                                  ┌──────────▼──────────┐
              │                                  │ LexicalRibaDetector │
-             │                                  │ (determinist,       │
-             │                                  │  offline)           │
+             │                                  │ (حتمي،              │
+             │                                  │  غير متصل بالإنترنت)│
              │                                  └──────────┬──────────┘
-             │                                              │ (opțional)
+             │                                              │ (اختياري)
              │                                  ┌──────────▼──────────┐
              │                                  │ RibaClassifierProtocol│
-             │                                  │ (model ML extern,    │
-             │                                  │  ex: AraBERT)        │
+             │                                  │ (نموذج تعلّم آلة خارجي،│
+             │                                  │  مثل AraBERT)        │
              │                                  └──────────────────────┘
    ┌─────────▼─────────┐
    │  ZakatCalculator    │
@@ -59,28 +60,27 @@ Sharia-AI este construit pe patru principii, în această ordine de prioritate:
    └───────────────────┘
 ```
 
-## Fluxul unei cereri de conformitate
+## مسار طلب الامتثال
 
-1. Clientul (API, script, notebook) construiește un obiect `CompanyFinancials`.
-2. `ShariaCompliancePipeline.run()` invocă `EquityScreener.screen()`, care
-   aplică secvențial regulile de excludere sectorială și cele patru rate
-   financiare din `ScreeningThresholds`.
-3. Dacă sunt furnizate contracte, fiecare document este trecut prin
-   `HybridContractScreener`, care rulează întâi `LexicalRibaDetector`
-   (determinist) și, dacă e configurat, agregă și scorurile unui
-   clasificator ML extern.
-4. Dacă sunt furnizate active, `ZakatCalculator` calculează averea netă
-   supusă Zakat, pragul Nisab (aur/argint, configurabil) și suma datorată.
-5. Rezultatele sunt agregate într-un `CompanyComplianceReport`, serializabil
-   direct în JSON prin `to_json()`.
+1. يبني العميل (واجهة برمجية، سكريبت، دفتر ملاحظات) كائن
+   `CompanyFinancials`.
+2. تستدعي `ShariaCompliancePipeline.run()` دالة `EquityScreener.screen()`،
+   التي تطبّق بالتتابع قواعد الاستبعاد القطاعي والنسب المالية الأربع من
+   `ScreeningThresholds`.
+3. إذا تم توفير عقود، يمرّ كل مستند عبر `HybridContractScreener`، التي
+   تشغّل أولًا `LexicalRibaDetector` (حتمي)، وإذا كانت مُهيَّأة، تجمّع
+   أيضًا نتائج مصنّف تعلّم آلة خارجي.
+4. إذا تم توفير أصول، تحسب `ZakatCalculator` صافي الثروة الخاضعة
+   للزكاة، وعتبة النصاب (ذهب/فضة، قابلة للتهيئة)، والمبلغ المستحق.
+5. تُجمَّع النتائج في `CompanyComplianceReport`، قابل للتسلسل مباشرة
+   بصيغة JSON عبر `to_json()`.
 
-## Extensibilitate NLP
+## قابلية التوسع لمعالجة اللغة الطبيعية
 
-Motorul lexical (`LexicalRibaDetector`) este intenționat simplu și
-determinist — potrivit ca prim filtru într-un pipeline reglementat, unde
-auditabilitatea contează la fel de mult ca recall-ul. Pentru acoperire
-semantică mai profundă (parafraze, formulări indirecte de dobândă etc.),
-proiectul este pregătit să integreze un model transformer prin
+المحرك المعجمي (`LexicalRibaDetector`) بسيط وحتمي عمدًا — مناسب كمرشّح
+أول ضمن خط معالجة منظَّم، حيث تُعتبر قابلية التدقيق بنفس أهمية معدّل
+الاستدعاء. للحصول على تغطية دلالية أعمق (إعادة الصياغة، الصيغ غير
+المباشرة للفائدة إلخ)، المشروع جاهز لدمج نموذج تحويلي عبر
 `RibaClassifierProtocol`:
 
 ```python
@@ -88,11 +88,11 @@ from sharia_ai.nlp.riba_detector import ConcernCategory, RibaClassifierProtocol
 
 class AraBertRibaClassifier:
     def __init__(self, model_path: str):
-        # încarcă modelul fine-tuned (ex: transformers.AutoModelForSequenceClassification)
+        # تحميل النموذج المُدرَّب (مثل transformers.AutoModelForSequenceClassification)
         ...
 
     def predict(self, sentence: str) -> list[tuple[ConcernCategory, float]]:
-        # rulează inferența și mapează logit-urile la (categorie, scor)
+        # تشغيل الاستدلال وربط قيم logit بـ (الفئة، الدرجة)
         ...
 
 from sharia_ai.nlp.riba_detector import HybridContractScreener, LexicalRibaDetector
@@ -103,14 +103,14 @@ screener = HybridContractScreener(
 )
 ```
 
-Niciun cod din `pipelines` sau `api` nu trebuie modificat pentru a beneficia
-de acest upgrade — interfața `Protocol` garantează compatibilitatea.
+لا حاجة لتعديل أي كود من `pipelines` أو `api` للاستفادة من هذا الترقية
+— تضمن واجهة `Protocol` التوافقية.
 
-## Configurare externă (YAML → praguri)
+## التهيئة الخارجية (YAML ← العتبات)
 
-Pentru integrare cu sisteme externe de configurare (dashboard de audit,
-CI/CD de politici), `data/rules/aaoifi_thresholds.yaml` oglindește valorile
-din `screening/rules.py`. Exemplu de loader (necesită `pyyaml`, extra opțional):
+للتكامل مع أنظمة تهيئة خارجية (لوحة تدقيق، سياسات CI/CD)، يعكس
+`data/rules/aaoifi_thresholds.yaml` القيم من `screening/rules.py`. مثال
+على أداة تحميل (يتطلب `pyyaml`، إضافة اختيارية):
 
 ```python
 import yaml
@@ -128,12 +128,11 @@ thresholds = ScreeningThresholds(
 )
 ```
 
-## Considerații de securitate și confidențialitate a datelor
+## اعتبارات الأمان وخصوصية البيانات
 
-- Toolkit-ul nu persistă date implicit — fiecare apel este stateless.
-- Pentru integrare cu date financiare reale, se recomandă rularea API-ului
-  în interiorul perimetrului de rețea al instituției (nu expus public fără
-  autentificare/autorizare suplimentară — vezi `docs/roadmap.md`, item
-  "Autentificare API").
-- Lexiconul NLP conține doar termeni financiari/juridici generici — nu
-  procesează sau stochează date personale.
+- لا تحتفظ الأدوات بالبيانات افتراضيًا — كل استدعاء عديم الحالة (stateless).
+- للتكامل مع بيانات مالية حقيقية، يوصى بتشغيل الواجهة البرمجية داخل
+  محيط شبكة المؤسسة (وليس مكشوفًا للعموم دون مصادقة/تفويض إضافيين —
+  راجع `docs/roadmap.md`، عنصر "مصادقة الواجهة البرمجية").
+- يحتوي معجم معالجة اللغة الطبيعية فقط على مصطلحات مالية/قانونية عامة
+  — لا يعالج أو يخزّن بيانات شخصية.

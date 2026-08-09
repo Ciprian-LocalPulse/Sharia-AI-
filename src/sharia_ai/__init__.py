@@ -1,15 +1,17 @@
 """
-sharia-ai — Toolkit open-source de date & AI pentru conformitate fintech
-Sharia-compliant, orientat spre companiile din regiunea MENA.
+sharia-ai — مجموعة أدوات مفتوحة المصدر للبيانات والذكاء الاصطناعي من أجل
+الامتثال في التقنية المالية المتوافقة مع الشريعة، موجَّهة للشركات في
+منطقة الشرق الأوسط وشمال أفريقيا (MENA).
 
-Module principale:
-    screening   — Screening de echitate (AAOIFI/DJIM) și de contracte
-    nlp         — Pipeline NLP pentru limba arabă (detecție riba/gharar/maysir)
-    zakat       — Motor de calcul Zakat (Nisab, active, datorii)
-    pipelines   — Orchestrare end-to-end a fluxurilor de conformitate
-    api         — Strat API (FastAPI) pentru integrare externă
+الوحدات الرئيسية:
+    screening   — فرز الأسهم (AAOIFI/DJIM) والعقود
+    nlp         — خط معالجة اللغة العربية الطبيعية (كشف الربا/الغرر/الميسر)
+    zakat       — محرك حساب الزكاة (النصاب، الأصول، الديون)
+    pipelines   — تنسيق شامل لتدفقات الامتثال
+    api         — طبقة واجهة برمجية (FastAPI) للتكامل الخارجي
 
-Licență: MIT. Vezi LICENSE la rădăcina proiectului.
+المؤلف: Ciprian Ștefan Pleșca
+الترخيص: MIT. راجع ملف LICENSE في جذر المشروع.
 """
 
 __version__ = "0.1.0"

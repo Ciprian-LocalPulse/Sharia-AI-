@@ -1,322 +1,305 @@
-# Sharia-AI: An Open, Auditable Toolkit for Sharia-Compliant Fintech Screening in the Arab World
+# Sharia-AI: أداة مفتوحة وقابلة للتدقيق لفرز الامتثال الشرعي في التقنية المالية بالعالم العربي
 
-**Working Paper — v0.1 (Alpha)**
-**License: MIT** · **Status: Open Source, Community Draft**
-
----
-
-## Abstract
-
-Financial technology adoption across the Arab world has accelerated
-sharply over the past decade, yet the tooling ecosystem for **Sharia
-compliance verification** has not kept pace. Existing solutions are
-predominantly proprietary, closed-methodology services that function as
-black boxes: a company or instrument receives a compliant/non-compliant
-label with little to no exposed reasoning, and almost none offer native,
-linguistically-aware support for Arabic-language contracts. This paper
-introduces **Sharia-AI**, an open-source toolkit combining rule-based
-equity screening aligned with AAOIFI and major Islamic index
-methodologies, an Arabic natural-language pipeline for detecting *riba*
-(interest), *gharar* (excessive uncertainty), and *maysir* (speculation)
-in contract text, and a transparent Zakat calculation engine. We describe
-the system architecture, the linguistic challenges specific to Arabic
-clitic morphology that a naive substring-matching approach fails to
-handle correctly, our mitigation strategy, and the empirical validation
-performed via a unit-test regression suite. We position this work as an
-infrastructure contribution — not a fatwa-issuing authority — intended to
-lower the barrier for businesses, researchers, and developers building
-Sharia-compliant financial products.
-
-**Keywords:** Islamic finance, Sharia compliance, regtech, Arabic NLP,
-AAOIFI, Zakat computation, explainable AI, open-source fintech infrastructure.
+**ورقة بحثية عاملة — الإصدار 0.1 (ألفا)**
+**الترخيص: MIT** · **الحالة: مفتوحة المصدر، مسودة مجتمعية**
+**المؤلف: Ciprian Ștefan Pleșca**
 
 ---
 
-## 1. Introduction
+## الملخص
 
-### 1.1 Motivation
+تسارع اعتماد التقنية المالية (Fintech) في العالم العربي بشكل حاد خلال
+العقد الماضي، غير أن منظومة الأدوات الخاصة **بالتحقق من الامتثال
+الشرعي** لم تواكب هذا التسارع. الحلول القائمة حاليًا هي في غالبها
+خدمات مملوكة ذات منهجية مغلقة: تحصل الشركة أو الأداة المالية على تصنيف
+"متوافق/غير متوافق" دون أي منطق مكشوف أو قابل للتدقيق تقريبًا، وقلة
+منها فقط تقدّم دعمًا لغويًا أصليًا للعقود المكتوبة باللغة العربية.
+تقدّم هذه الورقة **Sharia-AI**، وهي مجموعة أدوات مفتوحة المصدر تجمع
+بين فرز الأسهم القائم على القواعد والمتوافق مع معايير AAOIFI ومنهجيات
+المؤشرات الإسلامية الكبرى، وخط معالجة لغة طبيعية عربي للكشف عن **الربا**
+(الفائدة) و**الغرر** (عدم اليقين المفرط) و**الميسر** (المضاربة/القمار)
+في نصوص العقود، ومحرك حساب زكاة شفاف. نصف في هذه الورقة البنية
+المعمارية للنظام، والتحديات اللغوية الخاصة بصرف اللواصق النحوية
+(clitics) العربية التي يفشل نهج المطابقة الحرفية الساذج في التعامل
+معها بشكل صحيح، واستراتيجية التخفيف التي اعتمدناها، والتحقق التجريبي
+المُنجز عبر مجموعة اختبارات الانحدار الوحدوية. نضع هذا العمل في إطار
+**بنية تحتية** — لا سلطة إفتاء — بهدف خفض الحاجز أمام الشركات والباحثين
+والمطورين الذين يبنون منتجات مالية متوافقة مع الشريعة.
 
-Islamic finance is estimated to represent well over a trillion dollars in
-global assets, with the Gulf Cooperation Council (GCC) states, the wider
-Levant, and North Africa forming its economic and jurisprudential core.
-Despite this scale, the software infrastructure available to companies
-seeking to verify or maintain Sharia compliance remains fragmented. Three
-structural gaps motivate this work:
-
-1. **Absence of open, auditable screening tools.** Commercial Sharia
-   screening services (index providers, compliance consultancies) rarely
-   publish their scoring logic in a form developers can inspect, extend,
-   or independently verify. This opacity is at odds with the very
-   principle such tools are meant to serve: demonstrable, justifiable
-   compliance.
-2. **Underserved Arabic natural-language processing in fintech tooling.**
-   General-purpose compliance and contract-analysis software is
-   overwhelmingly built and validated against English-language corpora.
-   Arabic's rich morphology — in particular the direct, space-free
-   attachment of prepositions and conjunctions to nouns (clitics) —
-   causes both false negatives (missed terms) and false positives
-   (spurious matches inside unrelated words) when handled with naive
-   text-matching techniques imported from Latin-script pipelines.
-3. **Opaque compliance methodology.** Businesses frequently cannot
-   articulate *why* an instrument was classified as compliant or
-   non-compliant, which undermines trust with Sharia Supervisory Boards,
-   investors, and regulators alike.
-
-Sharia-AI addresses each of these gaps directly: it is fully open-source
-under the MIT license, it implements an Arabic-aware detection pipeline
-validated against known morphological edge cases, and every component
-produces a rule-by-rule, human-readable justification rather than an
-opaque score.
-
-### 1.2 Scope and Non-Goals
-
-This toolkit is explicitly **not** a fatwa-issuing system. It does not
-claim jurisprudential authority, and its default thresholds reflect
-commonly used index methodologies rather than a singular authoritative
-ruling. We view it as **triage infrastructure**: a first-pass, explainable
-filter intended to reduce the manual burden on compliance teams and
-Sharia Supervisory Boards, who remain the final decision-making authority
-in any real-world deployment.
+**الكلمات المفتاحية:** التمويل الإسلامي، الامتثال الشرعي، التقنية
+التنظيمية (Regtech)، معالجة اللغة العربية الطبيعية، معايير AAOIFI،
+حساب الزكاة، الذكاء الاصطناعي القابل للتفسير، البنية التحتية مفتوحة
+المصدر للتقنية المالية.
 
 ---
 
-## 2. Related Methodologies
+## 1. المقدمة
 
-The quantitative equity-screening thresholds implemented in this toolkit
-are informed by three widely referenced methodological families:
+### 1.1 الدافع
 
-- **AAOIFI Shari'ah Standard No. 21** (Financial Paper — Shares/Bonds),
-  published by the Accounting and Auditing Organization for Islamic
-  Financial Institutions, which provides guidance on permissible
-  financial-ratio bounds for equity instruments.
-- **Dow Jones Islamic Market (DJIM) Index Methodology**, one of the
-  earliest and most widely cited index-level Sharia screening frameworks,
-  combining sector-based exclusion with financial-ratio screening.
-- **FTSE Shariah Global Equity Index Series — Ground Rules**, a
-  comparable methodology with minor variations in ratio denominators
-  (e.g., total assets versus market capitalization).
+يُقدَّر أن التمويل الإسلامي يمثل أكثر من تريليون دولار من الأصول
+عالميًا، حيث تشكّل دول مجلس التعاون الخليجي، والمشرق العربي الأوسع،
+وشمال أفريقيا نواته الاقتصادية والفقهية. رغم هذا الحجم، تبقى البنية
+التحتية البرمجية المتاحة للشركات الساعية للتحقق من الامتثال الشرعي أو
+الحفاظ عليه مجزأة. تحفّز هذا العمل ثلاث فجوات بنيوية:
 
-Our implementation follows the **market-capitalization-denominator**
-convention (consistent with DJIM) for simplicity and transparency, while
-exposing all thresholds as configurable parameters (`ScreeningThresholds`)
-so that an adopting institution can align with whichever methodology its
-own Sharia Supervisory Board prefers — including asset-denominator
-variants, without modifying the core screening logic.
+1. **غياب أدوات فرز مفتوحة وقابلة للتدقيق.** نادرًا ما تنشر خدمات
+   الفرز الشرعي التجارية (مزودو المؤشرات، شركات الاستشارات في
+   الامتثال) منطق التقييم الخاص بها بصيغة يمكن للمطورين فحصها أو
+   توسيعها أو التحقق منها بشكل مستقل. هذا الغموض يتعارض مع المبدأ
+   الذي من المفترض أن تخدمه هذه الأدوات أصلًا: الامتثال القابل للإثبات
+   والتبرير.
+2. **ضعف تغطية معالجة اللغة العربية الطبيعية في أدوات التقنية
+   المالية.** إن برمجيات الامتثال وتحليل العقود العامة مبنية ومُختبرة
+   في الغالب الساحق على مجموعات نصوص باللغة الإنجليزية. يتسبب الصرف
+   العربي الغني — وتحديدًا التصاق حروف الجر وأدوات العطف مباشرة
+   بالأسماء دون فراغ (اللواصق النحوية) — في كل من السلبيات الكاذبة
+   (مصطلحات مفقودة) والإيجابيات الكاذبة (تطابقات زائفة داخل كلمات غير
+   ذات صلة) عند التعامل معها بتقنيات مطابقة نصية ساذجة مستوردة من خطوط
+   معالجة اللاتينية.
+3. **منهجية امتثال غير شفافة.** غالبًا ما لا تستطيع الشركات توضيح
+   *سبب* تصنيف أداة مالية على أنها متوافقة أو غير متوافقة، مما يقوّض
+   الثقة مع هيئات الرقابة الشرعية والمستثمرين والجهات التنظيمية على حد
+   سواء.
 
-We note explicitly that these methodologies are **not** in full consensus
-with one another, nor with the more conservative thresholds used by some
-individual national Sharia boards. This is a known and accepted
-limitation of *any* rule-based screening system, and is documented in
-`docs/compliance_methodology.md` alongside guidance for institutions
-wishing to override defaults.
+يعالج Sharia-AI كل واحدة من هذه الفجوات بشكل مباشر: فهو مفتوح المصدر
+بالكامل بموجب ترخيص MIT، وينفّذ خط كشف واعٍ للغة العربية تم التحقق منه
+مقابل حالات صرفية حدّية معروفة، وكل مكوّن فيه ينتج تبريرًا مقروءًا
+بشريًا، قاعدة بقاعدة، بدلًا من درجة غامضة.
+
+### 1.2 النطاق وما لا يهدف إليه المشروع
+
+هذه الأدوات **ليست** نظامًا لإصدار الفتاوى. إنها لا تدّعي أي سلطة
+فقهية، وعتباتها الافتراضية تعكس منهجيات مؤشرات شائعة الاستخدام وليس
+حكمًا فقهيًا أوحد وسلطويًا. ننظر إليها باعتبارها **بنية تحتية للفرز
+الأولي**: مرشّح أولي قابل للتفسير، الهدف منه تقليل العبء اليدوي عن
+فرق الامتثال وهيئات الرقابة الشرعية، التي تبقى السلطة النهائية في
+اتخاذ القرار في أي تطبيق واقعي.
 
 ---
 
-## 3. System Architecture
+## 2. المنهجيات ذات الصلة
 
-### 3.1 Design Principles
+عتبات فرز الأسهم الكمية المطبَّقة في هذه الأدوات مستوحاة من ثلاث عائلات
+منهجية مرجعية على نطاق واسع:
 
-The system is organized around four ordered priorities, described in
-detail in `docs/architecture.md`:
+- **معيار الشريعة رقم 21 لهيئة AAOIFI** (الأوراق المالية — الأسهم
+  والسندات)، الصادر عن هيئة المحاسبة والمراجعة للمؤسسات المالية
+  الإسلامية، والذي يقدّم إرشادات حول الحدود المسموح بها للنسب المالية
+  لأدوات الأسهم.
+- **منهجية مؤشر داو جونز الإسلامي (DJIM)**، وهي من أقدم أطر الفرز
+  الشرعي على مستوى المؤشرات وأكثرها استشهادًا، تجمع بين الاستبعاد
+  القطاعي وفرز النسب المالية.
+- **قواعد سلسلة مؤشرات FTSE Shariah العالمية للأسهم**، وهي منهجية
+  مماثلة مع اختلافات طفيفة في مقامات النسب (مثل إجمالي الأصول مقابل
+  القيمة السوقية).
 
-1. **Explainability before raw accuracy** — every result object exposes
-   its constituent checks individually.
-2. **Offline-first operation** — the core logic (screening, NLP, Zakat,
-   pipeline orchestration) depends only on the Python standard library,
-   supporting deployment in data-sensitive, air-gapped financial
-   environments.
-3. **Extensibility without rewriting** — machine-learning components
-   attach via structural typing (`Protocol`), not inheritance, so a
-   future transformer-based classifier can be added without touching
-   pipeline or API code.
-4. **Configuration over hardcoding** — all financial thresholds are
-   parameters, not embedded constants.
+يتبع تنفيذنا اصطلاح **مقام القيمة السوقية** (المتوافق مع DJIM) من أجل
+البساطة والشفافية، مع الكشف عن جميع العتبات كمعاملات قابلة للتهيئة
+(`ScreeningThresholds`) بحيث تستطيع أي مؤسسة معتمِدة التوافق مع أي
+منهجية تفضّلها هيئتها الشرعية الخاصة — بما في ذلك صيغ مقام الأصول
+البديلة، دون تعديل منطق الفرز الأساسي.
 
-### 3.2 Component Overview
+نشير صراحة إلى أن هذه المنهجيات **ليست** في إجماع كامل فيما بينها، ولا
+مع العتبات الأكثر تحفظًا التي تستخدمها بعض الهيئات الشرعية الوطنية
+الفردية. هذا قيد معروف ومقبول لأي نظام فرز قائم على القواعد، وهو موثّق
+في `docs/compliance_methodology.md` إلى جانب إرشادات للمؤسسات الراغبة
+في تجاوز القيم الافتراضية.
 
-| Component | Responsibility |
+---
+
+## 3. البنية المعمارية للنظام
+
+### 3.1 مبادئ التصميم
+
+يُنظَّم النظام حول أربع أولويات مرتّبة، موصوفة بالتفصيل في
+`docs/architecture.md`:
+
+1. **قابلية التفسير قبل الدقة الخام** — يكشف كل كائن نتيجة عن
+   الفحوصات المكوّنة له فرادى.
+2. **العمل دون اتصال بالإنترنت كخيار افتراضي** — يعتمد المنطق الأساسي
+   (الفرز، معالجة اللغة الطبيعية، الزكاة، تنسيق خط المعالجة) فقط على
+   مكتبة بايثون القياسية، مما يدعم النشر في بيئات مالية حساسة للبيانات
+   ومعزولة عن الشبكة.
+3. **قابلية التوسّع دون إعادة الكتابة** — تتصل مكوّنات تعلّم الآلة عبر
+   الكتابة البنيوية (`Protocol`)، وليس الوراثة، بحيث يمكن إضافة مصنّف
+   تحويلي مستقبلي دون لمس كود خط المعالجة أو الواجهة البرمجية.
+4. **التهيئة بدلًا من الترميز الثابت** — جميع العتبات المالية معاملات،
+   وليست ثوابت مُدمجة.
+
+### 3.2 نظرة عامة على المكوّنات
+
+| المكوّن | المسؤولية |
 |---|---|
-| `screening.equity_screener` | Two-stage AAOIFI/DJIM-aligned screening: sectoral exclusion + four financial ratios. |
-| `nlp.riba_detector` | Hybrid lexical + optional ML detection of riba/gharar/maysir clauses in Arabic contract text. |
-| `zakat.zakat_calculator` | Dynamic Nisab-threshold Zakat computation over declared liquid and near-liquid assets. |
-| `pipelines.compliance_pipeline` | Orchestrates the above into a single, JSON-exportable `CompanyComplianceReport`. |
-| `api.main` | REST exposure of the pipeline via FastAPI, with auto-generated interactive documentation. |
+| `screening.equity_screener` | فرز على مرحلتين متوافق مع AAOIFI/DJIM: استبعاد قطاعي + أربع نسب مالية. |
+| `nlp.riba_detector` | كشف هجين (معجمي + تعلّم آلة اختياري) لعبارات الربا/الغرر/الميسر في نصوص العقود العربية. |
+| `zakat.zakat_calculator` | حساب زكاة بعتبة نصاب ديناميكية على الأصول السائلة وشبه السائلة المصرّح بها. |
+| `pipelines.compliance_pipeline` | ينسّق ما سبق في تقرير موحّد `CompanyComplianceReport` قابل للتصدير بصيغة JSON. |
+| `api.main` | كشف REST لخط المعالجة عبر FastAPI، مع توثيق تفاعلي يُولَّد تلقائيًا. |
 
-A full component diagram is provided in `docs/architecture.md`.
-
----
-
-## 4. The Arabic Clitic Problem in Contract Screening
-
-### 4.1 Problem Statement
-
-Arabic attaches a closed class of single-letter prepositions and
-conjunctions — *wa* (و, "and"), *fa* (ف, "then/so"), *bi* (ب, "with/by"),
-*ka* (ك, "like/as"), *li* (ل, "for/to") — directly to the following word,
-without a space, alongside the definite article *al* (ال). A term such as
-*fā'ida* (فائدة, "interest") therefore surfaces in running text most
-often as *bi-fā'ida* (بفائدة, "with interest") — a distinct token from
-the dictionary form. A naive lexicon-matching approach that checks only
-for exact token equality suffers substantial recall loss on precisely the
-clauses most relevant to compliance review.
-
-The inverse failure mode is equally serious. A naive **substring**-based
-matcher, applied to counter the recall problem above, introduces
-dangerous false positives: the three-letter root *r-b-a* (ربا, "riba",
-i.e. interest) is a literal substring of *al-arbāḥ* (الأرباح, "the
-profits") — an entirely unrelated and, in fact, Sharia-*permitted* term
-central to profit-and-loss-sharing contracts (*mudaraba*, *musharaka*).
-A substring-matching system would flag a standard profit-sharing clause
-as an interest-bearing one, actively undermining the tool's purpose.
-
-### 4.2 Our Approach
-
-We resolve this with word-boundary tokenization combined with a
-**candidate-variant generation** strategy (`clitic_variants()`), applied
-only to the *observed* text tokens — never to the canonical lexicon
-terms, which remain uncorrupted reference forms. For each token
-encountered in a contract, we generate a small set of candidate base
-forms by conditionally stripping a single leading one-letter
-clitic, the definite article, or both in combination, subject to a
-minimum residual-length constraint to avoid over-stripping short roots.
-A lexicon term is considered matched only if it equals one of these
-candidate forms — and multi-word lexicon phrases are matched as
-contiguous token sequences, not as raw substrings.
-
-This design was validated empirically during development: an initial
-substring-matching implementation incorrectly flagged a standard
-profit-and-loss-sharing clause containing *al-arbāḥ* (profits) as
-riba-related. The regression is now encoded as a permanent unit test
-(`test_no_false_positive_on_profits_word`), and a companion test verifies
-that the clitic-stripping mechanism correctly recovers *bi-fā'ida* as a
-match for the *fā'ida* lexicon entry
-(`test_detects_riba_with_attached_preposition`). We consider this class
-of error — high-confidence false positives on legitimate Islamic
-finance terminology — one of the more consequential failure modes for
-any Arabic-language compliance tool, and treat its prevention as a first-
-class design constraint rather than an edge case.
-
-### 4.3 Limitations
-
-The lexical detector remains, by construction, unable to recognize
-paraphrased or indirect formulations of interest-bearing arrangements
-that do not use its known vocabulary. Section 3.2's `RibaClassifierProtocol`
-interface is designed specifically to allow a future fine-tuned Arabic
-transformer model (e.g., AraBERT or CAMeLBERT variants) to augment —
-not replace — the deterministic lexical layer, preserving auditability
-while extending semantic recall. This integration is scoped for a future
-release (see `docs/roadmap.md`).
+مخطط كامل للمكوّنات متوفر في `docs/architecture.md`.
 
 ---
 
-## 5. Zakat Computation Methodology
+## 4. مشكلة اللواصق النحوية العربية في فرز العقود
 
-Zakat is computed following the majority classical interpretation: **2.5%
-of net zakatable wealth**, assessed against a **Nisab** threshold derived
-from the lower of the gold-equivalent (85g) or silver-equivalent (595g)
-value at current market prices — the conventional choice that favors
-Zakat recipients by lowering the qualifying threshold, and the more
-commonly adopted convention among contemporary Zakat calculators. Both
-the metal-price inputs and the choice between gold/silver/lower-of-both
-are exposed as constructor parameters (`ZakatCalculator`), avoiding silent
-assumptions about metal prices that would otherwise become stale.
+### 4.1 صياغة المشكلة
 
-Eligible assets — cash, collectible receivables, trade inventory at
-market value, Sharia-compliant investments, and precious metals — are
-summed and reduced by short-term liabilities before the Nisab comparison.
-We explicitly document, both in code comments and in
-`docs/compliance_methodology.md`, that this implementation does **not**
-cover more complex cases such as agricultural Zakat, livestock Zakat, or
-mixed long-term partnership assets, which require dedicated jurisprudential
-consultation beyond the scope of an automated calculator.
+تُلحق اللغة العربية فئة مغلقة من حروف الجر وأدوات العطف أحادية الحرف —
+"و" (العطف)، "ف" (السببية/الترتيب)، "ب" (الإلصاق/السببية)، "ك"
+(التشبيه)، "ل" (اللام) — مباشرة بالكلمة التالية دون فراغ، إلى جانب أداة
+التعريف "ال". لذا فإن مصطلحًا مثل "فائدة" يظهر في النص الجاري في
+الغالب على شكل "بفائدة" — وهو رمز مختلف عن الصيغة المعجمية. إن نهج
+مطابقة معجمية ساذج يتحقق فقط من التطابق الحرفي للرموز يعاني من فقدان
+كبير في الاستدعاء (recall) على وجه التحديد في البنود الأكثر صلة
+بمراجعة الامتثال.
 
----
+نمط الفشل المعاكس لا يقل خطورة. إن مُطابِق **السلسلة الفرعية**
+(substring) الساذج، المُطبَّق لمواجهة مشكلة الاستدعاء أعلاه، يُدخل
+إيجابيات كاذبة خطيرة: يشكّل الجذر الثلاثي "ر-ب-ا" (ربا، أي الفائدة)
+سلسلة فرعية حرفية داخل كلمة "الأرباح" — وهو مصطلح غير ذي صلة على
+الإطلاق، بل وهو في الواقع **مسموح** شرعًا، ومحوري في عقود المشاركة في
+الأرباح والخسائر (المضاربة، المشاركة). سيقوم نظام مطابقة السلاسل
+الفرعية بوسم بند مشاركة أرباح قياسي كبند قائم على الفائدة، مما يقوّض
+فعليًا الغرض من الأداة.
 
-## 6. Validation
+### 4.2 نهجنا في المعالجة
 
-Given the offline-first design constraint, validation was performed via a
-16-case unit-test suite (`tests/`, `unittest`, standard library only —
-no network dependency), covering:
+نحل هذه المشكلة عبر ترميز على حدود الكلمات (word-boundary tokenization)
+مقترنًا باستراتيجية **توليد صيغ مرشّحة** (`clitic_variants()`)، تُطبَّق
+فقط على رموز النص **المُلاحَظ** — وليس أبدًا على مصطلحات المعجم
+الأساسية، التي تبقى صيغًا مرجعية غير معدَّلة. لكل رمز يُصادَف في عقد،
+نولّد مجموعة صغيرة من الصيغ الأساسية المرشّحة عبر إزالة مشروطة للاصقة
+واحدة رئيسية من حرف واحد، أو أداة التعريف، أو كليهما معًا، مع مراعاة
+قيد الحد الأدنى لطول ما تبقّى لتجنّب الإزالة المفرطة من الجذور
+القصيرة. لا يُعتبر مصطلح المعجم متطابقًا إلا إذا كان مساويًا لإحدى هذه
+الصيغ المرشّحة — كما تُطابَق عبارات المعجم متعددة الكلمات كتسلسلات رموز
+متجاورة، وليس كسلاسل فرعية خام.
 
-- Equity screening: compliant baseline, sectoral exclusion, excessive
-  debt ratio, income-purification triggering, and division-by-zero
-  robustness on degenerate (zero market cap) inputs.
-- Contract screening: correct detection of riba and maysir keywords,
-  a clean-text negative control, an empty-input edge case, the
-  *al-arbāḥ* false-positive regression described in Section 4.2, and
-  correct clitic-attached term recovery.
-- Zakat computation: below-Nisab null result, above-Nisab 2.5%
-  calculation, liability deduction, correct lower-of-gold/silver Nisab
-  selection, and negative-net-wealth clamping.
+تم التحقق من هذا التصميم تجريبيًا أثناء التطوير: أدى تنفيذ أولي قائم
+على مطابقة السلاسل الفرعية إلى وسم خاطئ لبند مشاركة أرباح وخسائر قياسي
+يحتوي على "الأرباح" باعتباره متعلقًا بالربا. تم الآن ترميز هذا الانحدار
+كاختبار وحدة دائم (`test_no_false_positive_on_profits_word`)، ويتحقق
+اختبار مرافق من أن آلية إزالة اللواصق تستعيد بشكل صحيح "بفائدة"
+كمطابقة لمدخل المعجم "فائدة"
+(`test_detects_riba_with_attached_preposition`). نعتبر هذا الصنف من
+الأخطاء — إيجابيات كاذبة عالية الثقة على مصطلحات تمويل إسلامي مشروعة —
+واحدًا من أكثر أنماط الفشل تأثيرًا لأي أداة امتثال باللغة العربية،
+ونتعامل مع منعه كقيد تصميم من الدرجة الأولى وليس كحالة حدّية.
 
-All 16 tests pass in the current release. We regard this suite less as a
-statement of completeness and more as a **living regression contract**:
-contributors extending the lexicon or thresholds are required (see
-`docs/contributing.md`) to add a corresponding test, including a negative
-case guarding against new false positives — the same discipline that
-surfaced and resolved the *al-arbāḥ* issue during initial development.
+### 4.3 القيود
 
----
-
-## 7. Discussion: Positioning as Infrastructure, Not Authority
-
-We deliberately frame Sharia-AI as **infrastructure** rather than as a
-compliance *authority*. Every report generated by the pipeline is labeled
-"subject to Sharia Supervisory Board review," every threshold is
-overridable, and the codebase and documentation consistently avoid
-issuing categorical jurisprudential claims. This positioning reflects a
-considered trade-off: a tool that is maximally useful to developers and
-businesses building Sharia-compliant products, while remaining
-epistemically honest about the limits of what rule-based and NLP-based
-screening can determine. We view this as consistent with the broader
-principle that automated systems interacting with religious and legal
-interpretation should support, not supplant, qualified human judgment.
+يبقى الكاشف المعجمي، بحكم بنائه، عاجزًا عن التعرّف على الصيغ المُعاد
+صياغتها أو غير المباشرة لترتيبات قائمة على الفائدة والتي لا تستخدم
+مفرداته المعروفة. صُمِّمت واجهة `RibaClassifierProtocol` في القسم 3.2
+خصيصًا للسماح لنموذج تحويلي عربي مُدرَّب مستقبليًا (مثل صيغ AraBERT أو
+CAMeLBERT) بتعزيز — وليس استبدال — الطبقة المعجمية الحتمية، مع الحفاظ
+على قابلية التدقيق مع توسيع الاستدعاء الدلالي. هذا التكامل مُخطَّط
+لإصدار مستقبلي (راجع `docs/roadmap.md`).
 
 ---
 
-## 8. Future Work
+## 5. منهجية حساب الزكاة
 
-Planned extensions, detailed in `docs/roadmap.md`, include: API
-authentication for multi-tenant deployment; integration of a fine-tuned
-Arabic transformer classifier for semantic-level contract scoring;
-dedicated screening modules for Sukuk (Islamic bonds) and Takaful (Islamic
-insurance) structures; PDF export for audit-ready reporting; and — pending
-availability of a jurist-annotated dataset — a published benchmark corpus
-of Arabic financial-contract clauses to support reproducible research in
-Arabic legal NLP beyond this toolkit's immediate scope.
+تُحسَب الزكاة وفق التفسير الفقهي الكلاسيكي السائد: **2.5% من صافي
+الثروة الخاضعة للزكاة**، مُقيَّمة مقابل عتبة **النصاب** المشتقة من
+الأقل بين المعادل الذهبي (85 غرامًا) أو المعادل الفضي (595 غرامًا)
+بالأسعار السوقية الحالية — وهو الخيار التقليدي الذي يفضّل مستحقي
+الزكاة عبر خفض عتبة الاستحقاق، والاصطلاح الأكثر اعتمادًا بين حاسبات
+الزكاة المعاصرة. تُعرَض كل من مدخلات أسعار المعادن والاختيار بين
+الذهب/الفضة/الأقل من بينهما كمعاملات في المُنشئ (`ZakatCalculator`)،
+مما يتجنّب افتراضات صامتة حول أسعار المعادن قد تصبح قديمة دون إشعار.
 
----
-
-## 9. Conclusion
-
-Sharia-AI contributes an open, explainable, and Arabic-linguistically
-aware toolkit to a fintech tooling landscape that has, to date, been
-dominated by closed and often linguistically under-adapted solutions. By
-grounding equity screening in documented AAOIFI/DJIM-aligned methodology,
-solving the specific and previously under-addressed Arabic clitic-matching
-problem with an auditable, tested approach, and exposing every
-compliance decision as an inspectable set of rule checks, the project
-aims to lower the barrier for businesses across the Arab world to build,
-audit, and trust Sharia-compliant financial products — while explicitly
-and consistently deferring final jurisprudential authority to qualified
-human Sharia Supervisory Boards.
+تُجمَع الأصول المؤهَّلة — النقد، الذمم المدينة القابلة للتحصيل، مخزون
+التجارة بالقيمة السوقية، الاستثمارات المتوافقة شرعًا، والمعادن الثمينة
+— وتُخفَّض بالخصوم قصيرة الأجل قبل مقارنة النصاب. نوثّق صراحة، سواء في
+تعليقات الكود أو في `docs/compliance_methodology.md`، أن هذا التنفيذ
+**لا** يغطي حالات أكثر تعقيدًا مثل زكاة الزروع والثمار، أو زكاة
+الأنعام، أو أصول الشراكة طويلة الأجل المختلطة، والتي تتطلب استشارة
+فقهية متخصصة تتجاوز نطاق حاسبة آلية.
 
 ---
 
-## References (methodological, non-exhaustive)
+## 6. التحقق
 
-- Accounting and Auditing Organization for Islamic Financial Institutions
-  (AAOIFI), *Shari'ah Standard No. 21: Financial Paper (Shares and Bonds)*.
-- S&P Dow Jones Indices, *Dow Jones Islamic Market Index Methodology*.
-- FTSE Russell, *FTSE Shariah Global Equity Index Series — Ground Rules*.
+نظرًا لقيد التصميم "غير المتصل بالإنترنت أولًا"، تم إجراء التحقق عبر
+مجموعة اختبارات وحدة مكوّنة من 16 حالة (`tests/`، `unittest`، مكتبة
+قياسية فقط — دون اعتماد على الشبكة)، تغطي:
 
-## Citation
+- فرز الأسهم: خط أساس متوافق، استبعاد قطاعي، نسبة مديونية مفرطة،
+  تفعيل تنقية الدخل، ومتانة القسمة على صفر على مدخلات متدهورة (قيمة
+  سوقية صفرية).
+- فرز العقود: كشف صحيح لكلمات الربا والميسر، ضابط سلبي لنص نظيف، حالة
+  حدّية لمدخل فارغ، انحدار "الأرباح" الإيجابي الكاذب الموصوف في القسم
+  4.2، واستعادة صحيحة للمصطلح الملتصق بلاصقة نحوية.
+- حساب الزكاة: نتيجة صفرية تحت النصاب، حساب 2.5% فوق النصاب، خصم
+  الخصوم، اختيار صحيح للنصاب الأقل بين الذهب/الفضة، وتثبيت صافي الثروة
+  السلبي عند الصفر.
 
-See [`CITATION.cff`](./CITATION.cff) for machine-readable citation
-metadata.
+تنجح جميع الاختبارات الستة عشر في الإصدار الحالي. نعتبر هذه المجموعة
+أقل بوصفها بيانًا للاكتمال وأكثر بوصفها **عقد انحدار حي**: يُطلَب من
+المساهمين الذين يوسّعون المعجم أو العتبات (راجع `docs/contributing.md`)
+إضافة اختبار مقابل، يشمل حالة سلبية تحرس ضد إيجابيات كاذبة جديدة — نفس
+الانضباط الذي كشف وحلّ مشكلة "الأرباح" أثناء التطوير الأولي.
 
 ---
 
-*This document is a community working paper distributed under the MIT
-license alongside the accompanying source code. It does not constitute
-religious, legal, or financial advice.*
+## 7. مناقشة: التموضع كبنية تحتية، لا كسلطة
+
+نضع Sharia-AI عمدًا في إطار **البنية التحتية** بدلًا من **السلطة**
+الامتثالية. كل تقرير يُنشئه خط المعالجة مُوسَم بعبارة "خاضع لمراجعة
+هيئة الرقابة الشرعية"، وكل عتبة قابلة للتجاوز، ويتجنّب الكود والتوثيق
+باستمرار إصدار ادعاءات فقهية قطعية. يعكس هذا التموضع مفاضلة مدروسة:
+أداة مفيدة إلى أقصى حد للمطورين والشركات الذين يبنون منتجات متوافقة مع
+الشريعة، مع البقاء أمينًا معرفيًا بشأن حدود ما يمكن أن يحدّده الفرز
+القائم على القواعد ومعالجة اللغة الطبيعية. نرى هذا متسقًا مع المبدأ
+الأوسع القائل بأن الأنظمة الآلية المتفاعلة مع التفسير الديني والقانوني
+ينبغي أن تدعم الحكم البشري المؤهَّل لا أن تحلّ محله.
+
+---
+
+## 8. العمل المستقبلي
+
+تشمل الامتدادات المخطَّطة، المفصَّلة في `docs/roadmap.md`: مصادقة
+الواجهة البرمجية للنشر متعدد المستأجرين؛ دمج مصنّف تحويلي عربي مُدرَّب
+للتقييم الدلالي على مستوى العقد؛ وحدات فرز مخصّصة لهياكل الصكوك
+(السندات الإسلامية) والتكافل (التأمين الإسلامي)؛ تصدير PDF لتقارير
+جاهزة للتدقيق؛ وفي انتظار توفّر مجموعة بيانات مُعلَّقة من قبل فقهاء،
+مجموعة بيانات مرجعية منشورة لبنود عقود مالية عربية لدعم بحث قابل
+للتكرار في معالجة اللغة العربية القانونية الطبيعية يتجاوز نطاق هذه
+الأدوات المباشر.
+
+---
+
+## 9. الخاتمة
+
+يساهم Sharia-AI بأداة مفتوحة وقابلة للتفسير وواعية لغويًا باللغة
+العربية في منظومة أدوات تقنية مالية ظلت حتى الآن مهيمَنًا عليها من
+حلول مغلقة وغالبًا ما تكون غير مُكيَّفة لغويًا بشكل كافٍ. من خلال
+تأسيس فرز الأسهم على منهجية موثّقة متوافقة مع AAOIFI/DJIM، وحل مشكلة
+مطابقة اللواصق النحوية العربية المحددة وغير المعالَجة سابقًا بشكل كافٍ
+بنهج قابل للتدقيق ومُختبَر، وكشف كل قرار امتثال كمجموعة فحوصات قابلة
+للفحص، يهدف المشروع إلى خفض الحاجز أمام الشركات في جميع أنحاء العالم
+العربي لبناء وتدقيق والثقة بمنتجات مالية متوافقة مع الشريعة — مع
+التفويض الصريح والمستمر للسلطة الفقهية النهائية إلى هيئات رقابة شرعية
+بشرية مؤهَّلة.
+
+---
+
+## المراجع (منهجية، غير حصرية)
+
+- هيئة المحاسبة والمراجعة للمؤسسات المالية الإسلامية (AAOIFI)، *معيار
+  الشريعة رقم 21: الأوراق المالية (الأسهم والسندات)*.
+- مؤشرات S&P داو جونز، *منهجية مؤشر داو جونز الإسلامي*.
+- FTSE Russell، *قواعد سلسلة مؤشرات FTSE Shariah العالمية للأسهم*.
+
+## الاستشهاد
+
+راجع [`CITATION.cff`](./CITATION.cff) للاطلاع على بيانات الاستشهاد
+القابلة للقراءة الآلية.
+
+---
+
+*هذا المستند ورقة عمل مجتمعية موزّعة بموجب ترخيص MIT إلى جانب الكود
+المصدري المرافق. إعداد: Ciprian Ștefan Pleșca. لا يشكّل هذا المستند
+استشارة دينية أو قانونية أو مالية.*

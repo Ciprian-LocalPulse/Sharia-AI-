@@ -16,21 +16,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: تهيئة بايثون ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: تثبيت الاعتماديات
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Lint (ruff)
+      - name: فحص جودة الكود (ruff)
         run: ruff check src tests
 
-      - name: Type-check (mypy)
-        run: mypy src || true  # non-blocant în alpha; devine strict la v1.0
+      - name: فحص الأنواع (mypy)
+        run: mypy src || true  # غير مانع في مرحلة الألفا؛ يصبح صارمًا في الإصدار 1.0
 
-      - name: Run tests with coverage
+      - name: تشغيل الاختبارات مع تغطية الكود
         run: pytest --cov=sharia_ai --cov-report=term-missing

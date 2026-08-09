@@ -1,48 +1,50 @@
 """
-equity_screener.py — Screening de conformitate Sharia pentru acțiuni/companii.
+equity_screener.py — فرز الامتثال الشرعي للأسهم/الشركات.
 
-Aplică un proces în două etape, aliniat metodologiilor AAOIFI / DJIM / FTSE Shariah:
+يطبّق عملية على مرحلتين، متوافقة مع منهجيات AAOIFI / DJIM / FTSE Shariah:
 
-    1. Screening calitativ (de business): compania nu trebuie să opereze
-       predominant într-un sector exclus, iar venitul din surse haram
-       nu trebuie să depășească pragul configurat.
-    2. Screening cantitativ (financiar): rate de îndatorare, lichiditate
-       purtătoare de dobândă și creanțe raportate la capitalizarea bursieră.
+    1. الفرز النوعي (النشاط التجاري): يجب ألا تعمل الشركة بشكل غالب في
+       قطاع مستبعَد، ويجب ألا يتجاوز الدخل من مصادر حرام العتبة المُهيَّأة.
+    2. الفرز الكمي (المالي): نسب المديونية، السيولة التي تحمل فائدة،
+       والذمم المدينة منسوبة إلى القيمة السوقية.
 
-Rezultatul este un `ScreeningResult` explicabil (fiecare regulă e
-raportată individual), nu doar un verdict binar — esențial pentru
-audit și pentru comitetele Sharia care trebuie să poată justifica decizia.
+النتيجة هي `ScreeningResult` قابل للتفسير (يُبلَّغ عن كل قاعدة بشكل
+فردي)، وليس مجرد حكم ثنائي — أمر ضروري للتدقيق ولهيئات الرقابة الشرعية
+التي يجب أن تكون قادرة على تبرير قرارها.
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Optional
 
 from .rules import EXCLUDED_SECTORS, ScreeningThresholds
 
 
 @dataclass
 class CompanyFinancials:
-    """Date financiare minime necesare pentru screening cantitativ."""
+    """البيانات المالية الدنيا اللازمة للفرز الكمي."""
 
     name: str
-    sector: str  # cheie din EXCLUDED_SECTORS, sau "other"
+    sector: str  # مفتاح من EXCLUDED_SECTORS، أو "other"
     market_cap: float
     interest_bearing_debt: float
     cash_and_interest_bearing_deposits: float
     accounts_receivable: float
     total_revenue: float
-    haram_revenue: float = 0.0  # venit din activități secundare non-permise (ex: venit din dobândă incidental)
+    haram_revenue: float = 0.0  # دخل من أنشطة ثانوية غير مسموحة (مثل دخل الفائدة العرضي)
 
 
 @dataclass
 class RuleCheck:
-    """Rezultatul unei singure verificări de conformitate."""
+    """نتيجة فحص امتثال واحد."""
 
     rule: str
     passed: bool
-    value: float | None
-    threshold: float | None
+    value: Optional[float]
+    threshold: Optional[float]
     detail: str
 
 
@@ -54,21 +56,21 @@ class ScreeningResult:
     purification_ratio: float = 0.0
 
     def summary(self) -> str:
-        status = "CONFORM" if self.is_compliant else "NECONFORM"
+        status = "متوافق" if self.is_compliant else "غير متوافق"
         lines = [f"[{status}] {self.company}"]
         for c in self.checks:
-            mark = "OK " if c.passed else "FAIL"
+            mark = "نجح" if c.passed else "فشل"
             lines.append(f"  ({mark}) {c.rule}: {c.detail}")
         if self.purification_ratio > 0:
             lines.append(
-                f"  -> Rată de purificare a dividendului recomandată: "
-                f"{self.purification_ratio:.4%} din venitul distribuit"
+                f"  -> نسبة التنقية الموصى بها للأرباح الموزّعة: "
+                f"{self.purification_ratio:.4%} من الدخل الموزَّع"
             )
         return "\n".join(lines)
 
 
 class EquityScreener:
-    """Motor de screening configurabil pe bază de praguri."""
+    """محرك فرز قابل للتهيئة استنادًا إلى عتبات."""
 
     def __init__(self, thresholds: ScreeningThresholds | None = None):
         self.thresholds = thresholds or ScreeningThresholds()
@@ -76,69 +78,69 @@ class EquityScreener:
     def screen(self, company: CompanyFinancials) -> ScreeningResult:
         checks: list[RuleCheck] = []
 
-        # --- 1. Screening sectorial (business) ---
+        # --- 1. الفرز القطاعي (النشاط التجاري) ---
         sector_excluded = company.sector in EXCLUDED_SECTORS
         checks.append(
             RuleCheck(
-                rule="Activitate sectorială",
+                rule="النشاط القطاعي",
                 passed=not sector_excluded,
                 value=None,
                 threshold=None,
                 detail=(
-                    f"Sector exclus: {EXCLUDED_SECTORS.get(company.sector, '-')}"
+                    f"قطاع مستبعَد: {EXCLUDED_SECTORS.get(company.sector, '-')}"
                     if sector_excluded
-                    else f"Sector '{company.sector}' nu figurează pe lista de excludere"
+                    else f"القطاع '{company.sector}' لا يظهر في قائمة الاستبعاد"
                 ),
             )
         )
 
-        # --- 2. Venit haram secundar ---
+        # --- 2. الدخل الحرام الثانوي ---
         haram_ratio = self._safe_div(company.haram_revenue, company.total_revenue)
         checks.append(
             RuleCheck(
-                rule="Venit din surse neconforme",
+                rule="الدخل من مصادر غير متوافقة",
                 passed=haram_ratio <= self.thresholds.max_haram_revenue_ratio,
                 value=haram_ratio,
                 threshold=self.thresholds.max_haram_revenue_ratio,
-                detail=f"{haram_ratio:.2%} din venitul total (prag {self.thresholds.max_haram_revenue_ratio:.0%})",
+                detail=f"{haram_ratio:.2%} من إجمالي الدخل (العتبة {self.thresholds.max_haram_revenue_ratio:.0%})",
             )
         )
 
-        # --- 3. Datorie purtătoare de dobândă / capitalizare bursieră ---
+        # --- 3. الديون التي تحمل فائدة / القيمة السوقية ---
         debt_ratio = self._safe_div(company.interest_bearing_debt, company.market_cap)
         checks.append(
             RuleCheck(
-                rule="Îndatorare purtătoare de dobândă",
+                rule="المديونية التي تحمل فائدة",
                 passed=debt_ratio <= self.thresholds.max_debt_to_market_cap,
                 value=debt_ratio,
                 threshold=self.thresholds.max_debt_to_market_cap,
-                detail=f"{debt_ratio:.2%} din cap. bursieră (prag {self.thresholds.max_debt_to_market_cap:.0%})",
+                detail=f"{debt_ratio:.2%} من القيمة السوقية (العتبة {self.thresholds.max_debt_to_market_cap:.0%})",
             )
         )
 
-        # --- 4. Numerar + depozite purtătoare de dobândă / capitalizare bursieră ---
+        # --- 4. النقد + الودائع التي تحمل فائدة / القيمة السوقية ---
         cash_ratio = self._safe_div(
             company.cash_and_interest_bearing_deposits, company.market_cap
         )
         checks.append(
             RuleCheck(
-                rule="Lichiditate purtătoare de dobândă",
+                rule="السيولة التي تحمل فائدة",
                 passed=cash_ratio <= self.thresholds.max_cash_interest_to_market_cap,
                 value=cash_ratio,
                 threshold=self.thresholds.max_cash_interest_to_market_cap,
-                detail=f"{cash_ratio:.2%} din cap. bursieră (prag {self.thresholds.max_cash_interest_to_market_cap:.0%})",
+                detail=f"{cash_ratio:.2%} من القيمة السوقية (العتبة {self.thresholds.max_cash_interest_to_market_cap:.0%})",
             )
         )
 
-        # --- 5. Creanțe / capitalizare bursieră ---
+        # --- 5. الذمم المدينة / القيمة السوقية ---
         recv_ratio = self._safe_div(company.accounts_receivable, company.market_cap)
         checks.append(
             RuleCheck(
-                rule="Creanțe comerciale",
+                rule="الذمم المدينة التجارية",
                 passed=recv_ratio <= self.thresholds.max_receivables_to_market_cap,
                 value=recv_ratio,
                 threshold=self.thresholds.max_receivables_to_market_cap,
-                detail=f"{recv_ratio:.2%} din cap. bursieră (prag {self.thresholds.max_receivables_to_market_cap:.0%})",
+                detail=f"{recv_ratio:.2%} من القيمة السوقية (العتبة {self.thresholds.max_receivables_to_market_cap:.0%})",
             )
         )
 

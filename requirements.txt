@@ -1,19 +1,19 @@
-# Runtime — core toolkit (fără dependențe grele; rulează offline)
-# (Modulele screening, nlp, zakat, pipelines folosesc doar stdlib.)
+# وقت التشغيل — الأدوات الأساسية (بلا اعتماديات ثقيلة؛ تعمل دون اتصال بالإنترنت)
+# (وحدات screening وnlp وzakat وpipelines تستخدم فقط المكتبة القياسية.)
 
-# Strat API opțional
+# طبقة الواجهة البرمجية الاختيارية
 fastapi>=0.110,<1.0
 uvicorn[standard]>=0.29,<1.0
 pydantic>=2.6,<3.0
 
-# Testare
+# الاختبار
 pytest>=8.0,<9.0
 pytest-cov>=5.0,<6.0
 
-# Calitate cod
+# جودة الكود
 ruff>=0.4,<1.0
 mypy>=1.9,<2.0
 
-# Date (opțional, pentru exemple/notebook-uri cu seturi mari de date)
+# البيانات (اختياري، للأمثلة/دفاتر الملاحظات مع مجموعات بيانات كبيرة)
 pandas>=2.2,<3.0
 pyyaml>=6.0,<7.0

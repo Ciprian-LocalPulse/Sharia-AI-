@@ -1,4 +1,4 @@
-# Python
+# بايثون
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -9,26 +9,26 @@ dist/
 venv/
 env/
 
-# Testare / acoperire
+# الاختبار / التغطية
 .pytest_cache/
 .coverage
 htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# Editor / OS
+# المحرر / نظام التشغيل
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# Variabile de mediu locale
+# متغيرات البيئة المحلية
 .env
 .env.local
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Output-uri generate local (rapoarte, exporturi)
+# مخرجات مُولَّدة محليًا (تقارير، تصديرات)
 /out/
 *.local.json

@@ -1,12 +1,14 @@
 # aaoifi_thresholds.yaml
-# Praguri de referință pentru screening-ul de echitate Sharia-compliant.
-# Aceste valori oglindesc implementarea din src/sharia_ai/screening/rules.py
-# și sunt furnizate aici în format YAML pentru integrare cu alte sisteme
-# (ex: dashboard de configurare, audit extern) fără a necesita import Python.
+# عتبات مرجعية لفرز الأسهم المتوافقة شرعًا.
+# تعكس هذه القيم التنفيذ في src/sharia_ai/screening/rules.py
+# وهي مُقدَّمة هنا بصيغة YAML للتكامل مع أنظمة أخرى
+# (مثل لوحة تحكم للتهيئة، تدقيق خارجي) دون الحاجة لاستيراد بايثون.
 #
-# ATENȚIE: modificarea acestor valori nu afectează automat codul Python —
-# vezi docs/architecture.md, secțiunea "Configurare externă" pentru un
-# exemplu de loader YAML -> ScreeningThresholds.
+# تنبيه: تعديل هذه القيم لا يؤثر تلقائيًا على كود بايثون —
+# راجع docs/architecture.md، قسم "التهيئة الخارجية" للاطلاع على
+# مثال محمّل YAML -> ScreeningThresholds.
+#
+# المؤلف: Ciprian Ștefan Pleșca
 
 business_screening:
   max_haram_revenue_ratio: 0.05
@@ -37,10 +39,9 @@ zakat:
 
 metadata:
   methodology_references:
-    - "AAOIFI Shari'ah Standard No. 21 (Financial Paper - Shares/Bonds)"
-    - "Dow Jones Islamic Market (DJIM) Index Methodology"
-    - "FTSE Shariah Global Equity Index Series - Ground Rules"
+    - "معيار الشريعة رقم 21 لهيئة AAOIFI (الأوراق المالية - الأسهم/السندات)"
+    - "منهجية مؤشر داو جونز الإسلامي (DJIM)"
+    - "قواعد سلسلة مؤشرات FTSE Shariah العالمية للأسهم"
   disclaimer: >
-    Aceste praguri reprezintă interpretări metodologice comune în industrie,
-    nu o fatwa. Utilizarea instituțională necesită validarea unui comitet
-    Sharia acreditat (Sharia Supervisory Board).
+    تمثّل هذه العتبات تفسيرات منهجية شائعة في الصناعة، وليست فتوى.
+    يتطلب الاستخدام المؤسسي التحقق من قبل هيئة رقابة شرعية معتمدة.

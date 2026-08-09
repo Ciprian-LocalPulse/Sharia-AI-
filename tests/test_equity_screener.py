@@ -34,7 +34,7 @@ class TestEquityScreener(unittest.TestCase):
         )
         result = self.screener.screen(company)
         self.assertFalse(result.is_compliant)
-        sector_check = next(c for c in result.checks if c.rule == "Activitate sectorială")
+        sector_check = next(c for c in result.checks if c.rule == "النشاط القطاعي")
         self.assertFalse(sector_check.passed)
 
     def test_excessive_debt_ratio_fails(self):
@@ -76,7 +76,7 @@ class TestEquityScreener(unittest.TestCase):
             total_revenue=100,
         )
         result = self.screener.screen(company)
-        # nu trebuie sa arunce exceptie de impartire la zero
+        # يجب ألا يُطلق استثناء القسمة على صفر
         self.assertIsNotNone(result)
 
 

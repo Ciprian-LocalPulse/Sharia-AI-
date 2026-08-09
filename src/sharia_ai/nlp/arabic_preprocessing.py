@@ -1,14 +1,16 @@
 """
-arabic_preprocessing.py — Normalizare de bază a textului arab pentru
-pipeline-urile de screening de contracte.
+arabic_preprocessing.py — تطبيع أساسي للنص العربي من أجل خطوط معالجة
+فرز العقود.
 
-Nu depinde de biblioteci externe (funcționează offline, doar stdlib),
-astfel încât să poată rula în medii izolate / air-gapped, frecvente în
-instituțiile financiare cu cerințe stricte de conformitate a datelor.
+لا يعتمد على مكتبات خارجية (يعمل دون اتصال بالإنترنت، مكتبة قياسية
+فقط)، بحيث يمكن تشغيله في بيئات معزولة، شائعة في المؤسسات المالية ذات
+متطلبات صارمة لامتثال البيانات.
 
-Pentru producție, se recomandă înlocuirea/extinderea cu un tokenizer
-morfologic dedicat (ex: CAMeL Tools, Farasa) — vezi docs/architecture.md
-secțiunea "Extensibilitate NLP".
+للإنتاج، يُوصى باستبدال/توسيع هذا بمُرمِّز صرفي مخصّص (مثل CAMeL Tools،
+Farasa) — راجع docs/architecture.md قسم "قابلية التوسع لمعالجة اللغة
+الطبيعية".
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from __future__ import annotations
@@ -16,20 +18,20 @@ from __future__ import annotations
 import re
 import unicodedata
 
-# Diacritice arabe (tashkeel) — Unicode 0617–061A, 064B–0652, 0670, 06D6–06ED
+# التشكيل العربي — يونيكود 0617–061A، 064B–0652، 0670، 06D6–06ED
 _ARABIC_DIACRITICS = re.compile(
     r"[\u0617-\u061A\u064B-\u0652\u0670\u06D6-\u06ED]"
 )
 
-# Normalizări comune de caractere (variante de alif, ya, ta marbuta)
+# تطبيع شائع للحروف (صيغ الألف، الياء، التاء المربوطة)
 _NORMALIZATION_MAP = {
     "\u0622": "\u0627",  # آ -> ا
     "\u0623": "\u0627",  # أ -> ا
     "\u0625": "\u0627",  # إ -> ا
     "\u0649": "\u064A",  # ى -> ي
-    "\u0629": "\u0647",  # ة -> ه (opțional, util pentru matching lejer)
-    "\u0626": "\u064A",  # ئ (ya cu hamza) -> ي
-    "\u0624": "\u0648",  # ؤ (waw cu hamza) -> و
+    "\u0629": "\u0647",  # ة -> ه (اختياري، مفيد لمطابقة مرنة)
+    "\u0626": "\u064A",  # ئ (ياء بهمزة) -> ي
+    "\u0624": "\u0648",  # ؤ (واو بهمزة) -> و
 }
 
 _WHITESPACE = re.compile(r"\s+")
@@ -37,19 +39,19 @@ _TOKEN_SPLIT = re.compile(r"[^\w\u0600-\u06FF]+")
 
 
 def strip_diacritics(text: str) -> str:
-    """Elimină tashkeel (diacriticele) din text."""
+    """يزيل التشكيل من النص."""
     return _ARABIC_DIACRITICS.sub("", text)
 
 
 def normalize_letters(text: str) -> str:
-    """Unifică variantele de alif/ya/ta marbuta pentru matching robust."""
+    """يوحّد صيغ الألف/الياء/التاء المربوطة لمطابقة متينة."""
     for src, dst in _NORMALIZATION_MAP.items():
         text = text.replace(src, dst)
     return text
 
 
 def normalize_arabic(text: str) -> str:
-    """Pipeline complet de normalizare: unicode NFC -> diacritice -> litere -> spații."""
+    """خط تطبيع كامل: يونيكود NFC -> التشكيل -> الحروف -> المسافات."""
     text = unicodedata.normalize("NFC", text)
     text = strip_diacritics(text)
     text = normalize_letters(text)
@@ -58,25 +60,24 @@ def normalize_arabic(text: str) -> str:
 
 
 def tokenize(text: str) -> list[str]:
-    """Tokenizare simplă pe cuvinte, păstrând doar caractere arabe/alfanumerice."""
+    """ترميز بسيط على الكلمات، مع الاحتفاظ فقط بالأحرف العربية/الأبجدية الرقمية."""
     normalized = normalize_arabic(text)
     tokens = [t for t in _TOKEN_SPLIT.split(normalized) if t]
     return tokens
 
 
-_CLITIC_PREFIXES_1 = ("و", "ف", "ب", "ك", "ل")  # conjuncții/prepoziții atașate direct (fără spațiu)
+_CLITIC_PREFIXES_1 = ("و", "ف", "ب", "ك", "ل")  # أدوات عطف/جر ملتصقة مباشرة (دون فراغ)
 _DEFINITE_ARTICLE = "ال"
 
 
 def clitic_variants(token: str, min_len: int = 2) -> set[str]:
-    """Generează variante ale unui token prin eliminarea clitic-elor arabe
-    uzuale (particule atașate fără spațiu: و ف ب ك ل și articolul hotărât ال),
-    fără a modifica lexiconul de referință — util pentru a crește recall-ul
-    matching-ului lexical (ex: 'بفائدة' -> variantă 'فائدة') fără a risca
-    coruperea termenilor canonici din lexicon.
+    """يولّد صيغًا لرمز عبر إزالة اللواصق النحوية العربية الشائعة (جزيئات
+    ملتصقة دون فراغ: و ف ب ك ل وأداة التعريف ال)، دون تعديل المعجم
+    المرجعي — مفيد لزيادة استدعاء المطابقة المعجمية (مثال: 'بفائدة' ->
+    الصيغة 'فائدة') دون المخاطرة بإفساد المصطلحات المرجعية في المعجم.
 
-    NU aplica aceste variante orbește pe termenii de referință — doar pe
-    tokenurile din textul analizat, apoi compară cu formele canonice.
+    لا تُطبَّق هذه الصيغ بشكل أعمى على المصطلحات المرجعية — فقط على
+    رموز النص المُحلَّل، ثم تُقارَن بالصيغ المرجعية.
     """
     variants = {token}
 
@@ -95,7 +96,7 @@ def clitic_variants(token: str, min_len: int = 2) -> set[str]:
 
 
 def sentence_split(text: str) -> list[str]:
-    """Segmentare simplă în propoziții/clauze contractuale, pe semne de punctuație
-    comune în documente arabe (., !, ?, ؟, ،, ;, و newline)."""
+    """تقسيم بسيط إلى جمل/بنود تعاقدية، وفق علامات ترقيم شائعة في
+    المستندات العربية (.، !، ؟، ،، ؛، وسطر جديد)."""
     parts = re.split(r"[\.\!\?؟؛\n]+", text)
     return [p.strip() for p in parts if p.strip()]

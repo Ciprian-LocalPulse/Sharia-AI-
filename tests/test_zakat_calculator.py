@@ -5,7 +5,7 @@ from sharia_ai.zakat.zakat_calculator import ZakatAssets, ZakatCalculator
 
 class TestZakatCalculator(unittest.TestCase):
     def setUp(self):
-        # Preturi ipotetice pentru teste deterministe
+        # أسعار افتراضية لاختبارات حتمية
         self.calc = ZakatCalculator(gold_price_per_gram=75.0, silver_price_per_gram=0.9)
 
     def test_below_nisab_owes_nothing(self):
@@ -27,9 +27,9 @@ class TestZakatCalculator(unittest.TestCase):
         self.assertAlmostEqual(result.zakat_due, 150.0)
 
     def test_uses_lower_nisab_by_default(self):
-        # argint: 595g * 0.9 = 535.5 ; aur: 85g * 75 = 6375 -> argintul e mai mic
+        # فضة: 595غ * 0.9 = 535.5 ؛ ذهب: 85غ * 75 = 6375 -> الفضة أقل
         nisab_value, metal = self.calc._nisab_threshold()
-        self.assertEqual(metal, "argint")
+        self.assertEqual(metal, "فضة")
         self.assertAlmostEqual(nisab_value, 535.5)
 
     def test_negative_net_wealth_clamped_to_zero(self):

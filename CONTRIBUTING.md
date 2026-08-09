@@ -1,18 +1,20 @@
-# Contribuție
+# المساهمة
 
-Ghidul complet de contribuție a fost mutat în
-[`docs/contributing.md`](./docs/contributing.md) pentru a păstra rădăcina
-proiectului curată și aliniată cu structura standard de documentație.
+**المؤلف: Ciprian Ștefan Pleșca**
 
-Pe scurt:
+تم نقل دليل المساهمة الكامل إلى
+[`docs/contributing.md`](./docs/contributing.md) للحفاظ على جذر
+المشروع نظيفًا ومتوافقًا مع بنية التوثيق القياسية.
 
-1. Fork + branch dedicat pentru fiecare schimbare.
-2. `pip install -e ".[dev]"` pentru mediul de dezvoltare.
-3. `ruff check src tests && mypy src && pytest --cov=sharia_ai` înainte de commit.
-4. Orice modificare a pragurilor de screening sau a lexiconului NLP
-   trebuie însoțită de o sursă metodologică și de un test de regresie
-   (inclusiv un caz negativ, pentru a preveni falsuri pozitive).
-5. Deschide un Pull Request descriind clar problema rezolvată.
+باختصار:
 
-Vezi [`docs/contributing.md`](./docs/contributing.md) pentru detalii complete
-și [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) pentru regulile comunității.
+1. Fork + فرع مخصّص لكل تعديل.
+2. `pip install -e ".[dev]"` لبيئة التطوير.
+3. `ruff check src tests && mypy src && pytest --cov=sharia_ai` قبل الإيداع.
+4. يجب أن يكون أي تعديل على عتبات الفرز أو معجم معالجة اللغة الطبيعية
+   مصحوبًا بمصدر منهجي واختبار انحدار (يشمل حالة سلبية، لمنع
+   الإيجابيات الكاذبة).
+5. افتح طلب سحب (Pull Request) يصف بوضوح المشكلة التي تم حلّها.
+
+راجع [`docs/contributing.md`](./docs/contributing.md) للتفاصيل الكاملة
+و[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) لقواعد المجتمع.

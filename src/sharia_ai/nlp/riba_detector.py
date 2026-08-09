@@ -1,19 +1,20 @@
 """
-riba_detector.py — Detecție de clauze contractuale problematice din perspectiva
-Sharia: riba (dobândă), gharar (incertitudine excesivă) și maysir (jocuri de
-noroc/speculație pură), în text arab.
+riba_detector.py — كشف البنود التعاقدية الإشكالية من منظور شرعي: الربا
+(الفائدة)، الغرر (عدم اليقين المفرط)، والميسر (القمار/المضاربة البحتة)،
+في النص العربي.
 
-Arhitectură pe două niveluri:
-    1. `LexicalRibaDetector`  — motor bazat pe reguli/lexicon (rulează offline,
-       fără dependențe externe, determinist și auditabil — potrivit ca prim
-       filtru într-un pipeline de conformitate reglementat).
-    2. `RibaClassifierProtocol` — interfață pe care o poate implementa orice
-       model ML/transformer (ex: AraBERT fine-tuned) pentru scoring semantic,
-       fără să schimbe restul pipeline-ului. Vezi docs/architecture.md.
+بنية على مستويين:
+    1. `LexicalRibaDetector` — محرك قائم على القواعد/المعجم (يعمل دون
+       اتصال بالإنترنت، بلا اعتماديات خارجية، حتمي وقابل للتدقيق —
+       مناسب كمرشّح أول ضمن خط معالجة امتثال منظَّم).
+    2. `RibaClassifierProtocol` — واجهة يمكن لأي نموذج تعلّم آلة/تحويلي
+       (مثل AraBERT مُدرَّب) تنفيذها لتقييم دلالي، دون تغيير بقية خط
+       المعالجة. راجع docs/architecture.md.
 
-Acest fișier NU emite fatwa. El semnalează clauze pentru revizuire umană
-de către un jurist/comitet Sharia — este un instrument de triaj, nu de
-decizie finală.
+هذا الملف **لا** يصدر فتوى. إنه يشير إلى بنود لمراجعة بشرية من قبل
+فقيه/هيئة رقابة شرعية — إنه أداة فرز أولي، وليس أداة قرار نهائي.
+
+المؤلف: Ciprian Ștefan Pleșca
 """
 
 from __future__ import annotations
@@ -22,44 +23,44 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
-from .arabic_preprocessing import clitic_variants, sentence_split, tokenize
+from .arabic_preprocessing import clitic_variants, normalize_arabic, sentence_split, tokenize
 
 
 class ConcernCategory(str, Enum):
-    RIBA = "riba"          # dobândă / interes
-    GHARAR = "gharar"      # incertitudine excesivă / ambiguitate contractuală
-    MAYSIR = "maysir"      # speculație pură / joc de noroc
+    RIBA = "riba"          # فائدة / ربا
+    GHARAR = "gharar"      # عدم يقين مفرط / غموض تعاقدي
+    MAYSIR = "maysir"      # مضاربة بحتة / قمار
     UNKNOWN_CLAUSE = "unknown_clause"
 
 
-# Lexicon inițial (extensibil). Cheile sunt forme normalizate (fără diacritice).
-# Fiecare intrare: termen -> (categorie, greutate de încredere 0-1)
+# معجم أوّلي (قابل للتوسيع). المفاتيح صيغ مُطبَّعة (بلا تشكيل).
+# كل مدخل: مصطلح -> (الفئة، وزن الثقة 0-1)
 _LEXICON: dict[str, tuple[ConcernCategory, float]] = {
-    # --- Riba (dobândă) ---
-    "فايده": (ConcernCategory.RIBA, 0.9),       # فائدة (dobândă) - normalizat
+    # --- الربا (الفائدة) ---
+    "فايده": (ConcernCategory.RIBA, 0.9),       # فائدة - مُطبَّعة
     "ربا": (ConcernCategory.RIBA, 0.95),
     "سعر الفايده": (ConcernCategory.RIBA, 0.95),
     "معدل الفايده": (ConcernCategory.RIBA, 0.95),
-    "فايده مركبه": (ConcernCategory.RIBA, 0.97),  # dobândă compusă
-    "قرض بفايده": (ConcernCategory.RIBA, 0.97),   # împrumut cu dobândă
-    "غرامه تاخير": (ConcernCategory.RIBA, 0.6),   # penalizare de întârziere (poate fi riba dacă e procentuală/timp)
-    # --- Gharar (incertitudine excesivă) ---
+    "فايده مركبه": (ConcernCategory.RIBA, 0.97),  # فائدة مركّبة
+    "قرض بفايده": (ConcernCategory.RIBA, 0.97),   # قرض بفائدة
+    "غرامه تاخير": (ConcernCategory.RIBA, 0.6),   # غرامة تأخير (قد تكون ربا إذا كانت نسبية/زمنية)
+    # --- الغرر (عدم اليقين المفرط) ---
     "غرر": (ConcernCategory.GHARAR, 0.85),
     "غموض": (ConcernCategory.GHARAR, 0.5),
-    "غير محدد": (ConcernCategory.GHARAR, 0.5),      # nedeterminat
-    "مجهول": (ConcernCategory.GHARAR, 0.55),        # necunoscut/nespecificat
-    "بيع ما لا يملك": (ConcernCategory.GHARAR, 0.9),  # vânzarea a ceva ce nu deții
-    # --- Maysir (speculație/joc de noroc) ---
+    "غير محدد": (ConcernCategory.GHARAR, 0.5),      # غير محدد
+    "مجهول": (ConcernCategory.GHARAR, 0.55),        # مجهول/غير مُحدَّد
+    "بيع ما لا يملك": (ConcernCategory.GHARAR, 0.9),  # بيع ما لا تملكه
+    # --- الميسر (المضاربة/القمار) ---
     "ميسر": (ConcernCategory.MAYSIR, 0.9),
     "قمار": (ConcernCategory.MAYSIR, 0.95),
-    "رهان": (ConcernCategory.MAYSIR, 0.85),          # pariu
-    "مضاربه بحته": (ConcernCategory.MAYSIR, 0.7),   # speculație pură
+    "رهان": (ConcernCategory.MAYSIR, 0.85),          # رهان
+    "مضاربه بحته": (ConcernCategory.MAYSIR, 0.7),   # مضاربة بحتة
 }
 
 
 @dataclass
 class Flag:
-    """O semnalare a unei posibile clauze problematice."""
+    """إشارة إلى بند محتمل الإشكالية."""
 
     sentence: str
     category: ConcernCategory
@@ -82,42 +83,42 @@ class DetectionReport:
 
     def summary(self) -> str:
         if not self.flags:
-            return "Nicio clauză suspectă detectată (screening lexical)."
-        lines = [f"{len(self.flags)} semnalări găsite:"]
+            return "لم يتم اكتشاف أي بند مشبوه (فرز معجمي)."
+        lines = [f"تم العثور على {len(self.flags)} إشارة/إشارات:"]
         for f in self.flags:
             lines.append(
-                f"  [{f.category.value.upper()} | încredere {f.confidence:.0%}] "
-                f"'{f.matched_term}' în: \"{f.sentence[:80]}...\""
+                f"  [{f.category.value.upper()} | الثقة {f.confidence:.0%}] "
+                f"'{f.matched_term}' في: \"{f.sentence[:80]}...\""
                 if len(f.sentence) > 80
-                else f"  [{f.category.value.upper()} | încredere {f.confidence:.0%}] "
-                f"'{f.matched_term}' în: \"{f.sentence}\""
+                else f"  [{f.category.value.upper()} | الثقة {f.confidence:.0%}] "
+                f"'{f.matched_term}' في: \"{f.sentence}\""
             )
         return "\n".join(lines)
 
 
 class RibaClassifierProtocol(Protocol):
-    """Interfață pentru un clasificator ML extern (ex: AraBERT fine-tuned).
+    """واجهة لمصنّف تعلّم آلة خارجي (مثل AraBERT مُدرَّب).
 
-    Orice implementare trebuie doar să respecte această semnătură pentru a fi
-    conectată la `HybridContractScreener` fără modificări în restul codului.
+    يجب على أي تنفيذ فقط احترام هذا التوقيع ليتم توصيله بـ
+    `HybridContractScreener` دون تعديلات في بقية الكود.
     """
 
     def predict(self, sentence: str) -> list[tuple[ConcernCategory, float]]:
-        """Returnează o listă de (categorie, scor de încredere 0-1) pentru propoziția dată."""
+        """يُعيد قائمة من (الفئة، درجة الثقة 0-1) للجملة المُعطاة."""
         ...
 
 
 class LexicalRibaDetector:
-    """Detector determinist bazat pe lexicon — rulează 100% offline."""
+    """كاشف حتمي قائم على المعجم — يعمل 100% دون اتصال بالإنترنت."""
 
     def __init__(self, lexicon: dict[str, tuple[ConcernCategory, float]] | None = None):
         self.lexicon = lexicon or _LEXICON
 
     def analyze(self, contract_text: str) -> DetectionReport:
-        """Potrivire pe granițe de cuvânt (nu substring brut), pentru a evita
-        falși pozitivi frecvenți în arabă — ex: termenul 'ربا' (riba) NU
-        trebuie să se potrivească în interiorul cuvântului 'الأرباح' (profituri),
-        deși acesta din urmă îl conține ca șir de caractere."""
+        """مطابقة على حدود الكلمة (وليس سلسلة فرعية خام)، لتجنّب
+        الإيجابيات الكاذبة الشائعة في العربية — مثال: مصطلح 'ربا' يجب
+        **ألا** يتطابق داخل كلمة 'الأرباح'، رغم أن هذه الأخيرة تحتويه
+        كسلسلة أحرف."""
         flags: list[Flag] = []
         for sentence in sentence_split(contract_text):
             sentence_tokens = tokenize(sentence)
@@ -138,13 +139,14 @@ class LexicalRibaDetector:
 
     @staticmethod
     def _contains_sequence(haystack: list[str], needle: list[str]) -> bool:
-        """Verifică dacă `needle` apare ca subsecvență CONTIGUĂ de tokenuri
-        întregi în `haystack` (matching pe cuvânt complet, nu pe substring).
+        """يتحقق من ظهور `needle` كتسلسل فرعي **متجاور** من رموز كاملة
+        ضمن `haystack` (مطابقة على مستوى الكلمة الكاملة، لا السلسلة
+        الفرعية).
 
-        Fiecare token din `haystack` este comparat prin variantele sale fără
-        clitic-e (ex: 'بفائدة' -> și 'فائدة'), pentru a recunoaște termeni de
-        lexicon chiar și atunci când apar cu prepoziții/conjuncții atașate —
-        foarte frecvent în arabă ('بفائدة', 'والقمار', 'كالربا' etc.).
+        تتم مقارنة كل رمز من `haystack` عبر صيغه الخالية من اللواصق
+        النحوية (مثال: 'بفائدة' -> أيضًا 'فائدة')، للتعرّف على مصطلحات
+        المعجم حتى عندما تظهر مع حروف جر/عطف ملتصقة — أمر شائع جدًا في
+        العربية ('بفائدة'، 'والقمار'، 'كالربا' إلخ).
         """
         n, m = len(haystack), len(needle)
         if m == 0 or m > n:
@@ -157,17 +159,17 @@ class LexicalRibaDetector:
 
 
 class HybridContractScreener:
-    """Combină detectorul lexical cu un clasificator ML opțional.
+    """يجمع بين الكاشف المعجمي ومصنّف تعلّم آلة اختياري.
 
-    Dacă `ml_classifier` este furnizat (orice obiect ce respectă
-    `RibaClassifierProtocol`), scorurile sale sunt fuzionate cu cele
-    lexicale (max pe categorie) pentru un rezultat mai robust semantic.
+    إذا تم توفير `ml_classifier` (أي كائن يحترم `RibaClassifierProtocol`)،
+    تُدمَج درجاته مع الدرجات المعجمية (الحد الأقصى لكل فئة) للحصول على
+    نتيجة أكثر متانة دلاليًا.
     """
 
     def __init__(
         self,
         lexical_detector: LexicalRibaDetector | None = None,
-        ml_classifier: RibaClassifierProtocol | None = None,
+        ml_classifier: "RibaClassifierProtocol | None" = None,
     ):
         self.lexical_detector = lexical_detector or LexicalRibaDetector()
         self.ml_classifier = ml_classifier
@@ -185,7 +187,7 @@ class HybridContractScreener:
                     Flag(
                         sentence=sentence,
                         category=category,
-                        matched_term="[model ML]",
+                        matched_term="[نموذج تعلّم آلة]",
                         confidence=score,
                     )
                 )

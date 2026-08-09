@@ -1,114 +1,111 @@
-# Metodologie de Conformitate Sharia
+# منهجية الامتثال الشرعي
 
-Acest document explică, la nivel de principiu, logica implementată în
-modulele `screening` și `zakat`, precum și limitările sale. Este scris
-pentru un public tehnic și non-tehnic deopotrivă (dezvoltatori, analiști
-de conformitate, membri ai unui comitet Sharia).
+**المؤلف: Ciprian Ștefan Pleșca**
 
-## 1. Screening de echitate (`screening/equity_screener.py`)
+يشرح هذا المستند، على مستوى المبدأ، المنطق المُنفَّذ في وحدتَي
+`screening` و`zakat`، وكذلك حدوده. كُتب لجمهور تقني وغير تقني على حد
+سواء (مطورون، محللو امتثال، أعضاء هيئة رقابة شرعية).
 
-Procesul urmează structura pe două etape folosită de indicii islamici
-majori (DJIM, FTSE Shariah, S&P Shariah):
+## 1. فرز الأسهم (`screening/equity_screener.py`)
 
-### 1.1 Screening calitativ (de activitate/business)
+تتبع العملية بنية على مرحلتين مستخدمة من قبل المؤشرات الإسلامية الكبرى
+(DJIM، FTSE Shariah، S&P Shariah):
 
-O companie este exclusă dacă activitatea sa principală se încadrează
-într-un sector considerat haram — listat în `EXCLUDED_SECTORS`
-(alcool, jocuri de noroc, bănci/asigurări convenționale, carne de porc,
-divertisment pentru adulți, tutun, armament controversat, media imorală).
+### 1.1 الفرز النوعي (النشاط/العمل)
 
-Această listă este **intenționat editabilă**: diferite comitete Sharia
-adoptă interpretări ușor diferite (ex: unele exclud tutunul strict, altele
-îl clasifică drept makruh sever, dar nu absolut haram).
+تُستبعَد الشركة إذا كان نشاطها الأساسي يندرج ضمن قطاع يُعتبر حرامًا —
+مُدرَج في `EXCLUDED_SECTORS` (الكحول، القمار، البنوك/التأمين
+التقليدي، لحم الخنزير، الترفيه للبالغين، التبغ، الأسلحة المثيرة
+للجدل، الإعلام غير الأخلاقي).
 
-### 1.2 Screening cantitativ (rate financiare)
+هذه القائمة **قابلة للتعديل عمدًا**: تعتمد هيئات الرقابة الشرعية
+المختلفة تفسيرات متباينة قليلًا (مثلًا: البعض يستبعد التبغ بشكل صارم،
+بينما يصنّفه آخرون كمكروه شديد، لا حرام مطلق).
 
-Chiar și o companie cu activitate permisă poate fi neconformă dacă
-structura sa financiară implică expunere semnificativă la dobândă (riba).
-Se verifică trei rate, fiecare raportată la capitalizarea bursieră:
+### 1.2 الفرز الكمي (النسب المالية)
 
-| Rată | Prag implicit | Raționament |
+حتى الشركة ذات النشاط المسموح قد تكون غير متوافقة إذا كانت بنيتها
+المالية تنطوي على تعرّض كبير للفائدة (الربا). يتم التحقق من ثلاث
+نسب، كل واحدة منسوبة إلى القيمة السوقية:
+
+| النسبة | العتبة الافتراضية | المنطق |
 |---|---|---|
-| Datorie purtătoare de dobândă / cap. bursieră | 33% | Limitează expunerea structurală la finanțare bazată pe dobândă. |
-| Numerar + depozite purtătoare de dobândă / cap. bursieră | 33% | Limitează venitul pasiv din dobândă deținut ca lichiditate. |
-| Creanțe comerciale / cap. bursieră | 49% | Limitează expunerea la instrumente asimilabile datoriei (vânzare de creanțe). |
+| الديون التي تحمل فائدة / القيمة السوقية | 33% | يحدّ من التعرّض البنيوي للتمويل القائم على الفائدة. |
+| النقد والودائع التي تحمل فائدة / القيمة السوقية | 33% | يحدّ من الدخل السلبي من الفائدة المحتفظ به كسيولة. |
+| الذمم المدينة التجارية / القيمة السوقية | 49% | يحدّ من التعرّض لأدوات تُشبه الديون (بيع الذمم المدينة). |
 
-Pragul de 33% provine din interpretarea clasică a unei treimi ("thuluth")
-ca limită a ceea ce este considerat "minoritar/nesemnificativ" (*al-aqall*)
-într-un context financiar mixt — o euristică juridică, nu o formulă exactă.
+نشأت عتبة 33% من التفسير الكلاسيكي للثلث ("ثُلُث") كحدّ لما يُعتبر
+"أقلية/غير ذي أهمية" (الأقل) في سياق مالي مختلط — قاعدة فقهية استرشادية،
+وليست معادلة دقيقة.
 
-### 1.3 Purificare a venitului (income purification)
+### 1.3 تنقية الدخل (تطهير الدخل)
 
-Dacă o companie este altfel conformă, dar are un procent mic de venit din
-surse neconforme (ex: dobândă incidentală la depozite bancare), sub pragul
-de excludere (implicit 5%), investitorii sunt sfătuiți convențional să
-"purifice" acel procent din dividendele primite — adică să-l doneze
-caritabil, nu să-l consume. `ScreeningResult.purification_ratio` calculează
-automat acest procent.
+إذا كانت الشركة متوافقة من نواحٍ أخرى، لكن لديها نسبة صغيرة من الدخل
+من مصادر غير متوافقة (مثل الفائدة العرضية على الودائع المصرفية)، تحت
+عتبة الاستبعاد (الافتراضية 5%)، يُنصَح المستثمرون تقليديًا "بتنقية" تلك
+النسبة من الأرباح الموزّعة المستلمة — أي التبرّع بها خيريًا، لا
+استهلاكها. تحسب `ScreeningResult.purification_ratio` هذه النسبة
+تلقائيًا.
 
-## 2. Detecție riba/gharar/maysir în contracte (`nlp/riba_detector.py`)
+## 2. كشف الربا/الغرر/الميسر في العقود (`nlp/riba_detector.py`)
 
-### 2.1 De ce lexical, nu doar ML
+### 2.1 لماذا معجمي، وليس تعلّم آلة فقط
 
-Un motor pur lexical (bazat pe listă de termeni) are dezavantajul evident
-al recall-ului limitat — nu recunoaște parafraze sau formulări indirecte.
-Are însă un avantaj esențial pentru context reglementat: **este determinist
-și complet auditabil**. Fiecare semnalare (`Flag`) indică exact ce termen
-a fost găsit, în ce propoziție, cu ce nivel de încredere predefinit.
-Pentru un comitet Sharia sau un auditor, această trasabilitate este
-adesea mai valoroasă decât un scor de "black box" de la un model ML.
+يعاني المحرك المعجمي البحت (القائم على قائمة مصطلحات) من عيب واضح
+يتمثل في استدعاء محدود — لا يتعرّف على إعادة الصياغة أو الصيغ غير
+المباشرة. لكنه يمتلك ميزة أساسية للسياق التنظيمي: **إنه حتمي وقابل
+للتدقيق بالكامل**. كل إشارة (`Flag`) تشير بالضبط إلى المصطلح الذي تم
+العثور عليه، وفي أي جملة، وبأي مستوى ثقة محدد مسبقًا. بالنسبة لهيئة
+رقابة شرعية أو مدقق، هذه القابلية للتتبع غالبًا ما تكون أكثر قيمة من
+درجة "صندوق أسود" لنموذج تعلّم آلة.
 
-De aceea arhitectura este **hibridă**: stratul lexical rulează întotdeauna
-ca prim filtru; un model ML (opțional, conectabil prin
-`RibaClassifierProtocol`) poate fi adăugat pentru acoperire semantică
-suplimentară, dar nu înlocuiește stratul de bază.
+لذلك البنية **هجينة**: الطبقة المعجمية تعمل دائمًا كمرشّح أول؛ يمكن
+إضافة نموذج تعلّم آلة (اختياري، قابل للاتصال عبر
+`RibaClassifierProtocol`) لتغطية دلالية إضافية، لكنه لا يحلّ محل الطبقة
+الأساسية.
 
-### 2.2 Cele trei categorii de risc
+### 2.2 فئات المخاطر الثلاث
 
-- **Riba** (دبا) — dobândă/interes, sub orice formă (simplă, compusă,
-  penalizări de întârziere calculate procentual în timp).
-- **Gharar** (غرر) — incertitudine sau ambiguitate excesivă în obiectul
-  contractului (preț nedeterminat, cantitate necunoscută, vânzarea unui
-  bun pe care vânzătorul nu îl deține).
-- **Maysir** (ميسر) — speculație pură/joc de noroc, unde câștigul unei
-  părți depinde exclusiv de șansă, fără o contribuție economică reală.
+- **الربا** — الفائدة/الفوائد، بأي شكل (بسيطة، مركّبة، غرامات تأخير
+  محسوبة كنسبة مئوية عبر الزمن).
+- **الغرر** — عدم يقين أو غموض مفرط في موضوع العقد (سعر غير محدد،
+  كمية مجهولة، بيع ما لا يملكه البائع).
+- **الميسر** — مضاربة بحتة/قمار، حيث يعتمد ربح أحد الطرفين حصريًا على
+  الحظ، دون مساهمة اقتصادية حقيقية.
 
-### 2.3 Provocări specifice limbii arabe
+### 2.3 تحديات خاصة باللغة العربية
 
-Araba atașează prepoziții și conjuncții direct la substantive, fără
-spațiu (clitic-e): "بفائدة" (cu dobândă) = "ب" + "فائدة". Un matching
-naiv pe substring produce atât **falși negativi** (nu recunoaște
-"بفائدة" ca variantă a "فائدة") cât și **falși pozitivi** periculoși
-(termenul "ربا" apare ca substring în interiorul cuvântului complet
-diferit "الأرباح" — profituri). Toolkit-ul rezolvă ambele probleme prin
-tokenizare pe cuvinte întregi + generare de variante fără clitic-e
-(`clitic_variants()`), nu prin căutare brută de substring. Vezi
-`tests/test_riba_detector.py` pentru cazurile de regresie exacte.
+تُلحق العربية حروف الجر وأدوات العطف مباشرة بالأسماء، دون فراغ
+(لواصق نحوية): "بفائدة" = "ب" + "فائدة". تُنتج المطابقة الساذجة على
+مستوى السلسلة الفرعية كلًا من **السلبيات الكاذبة** (عدم التعرّف على
+"بفائدة" كصيغة لـ"فائدة") و**الإيجابيات الكاذبة** الخطيرة (يظهر مصطلح
+"ربا" كسلسلة فرعية داخل كلمة "الأرباح" المختلفة تمامًا — الأرباح).
+تحلّ الأدوات كلتا المشكلتين عبر الترميز على كلمات كاملة + توليد صيغ بلا
+لواصق نحوية (`clitic_variants()`)، وليس عبر بحث خام عن سلسلة فرعية.
+راجع `tests/test_riba_detector.py` للاطلاع على حالات الانحدار الدقيقة.
 
-## 3. Calcul Zakat (`zakat/zakat_calculator.py`)
+## 3. حساب الزكاة (`zakat/zakat_calculator.py`)
 
-Implementarea urmează interpretarea clasică majoritară:
+يتبع التنفيذ التفسير الكلاسيكي السائد:
 
-- **Rata**: 2.5% din averea netă eligibilă.
-- **Nisab**: pragul minim de avere sub care Zakat nu este obligatoriu,
-  calculat dinamic pe baza prețului curent al aurului (85g) sau argintului
-  (595g). Implicit se folosește pragul mai mic dintre cele două (convenție
-  favorabilă beneficiarilor Zakat, larg acceptată).
-- **Active eligibile**: numerar, creanțe cu șanse rezonabile de încasare,
-  inventar comercial (la valoare de piață), investiții conforme Sharia,
-  aur/argint.
-- **Deduceri**: datorii scadente pe termen scurt.
+- **المعدّل**: 2.5% من صافي الثروة المؤهَّلة.
+- **النصاب**: العتبة الدنيا للثروة التي تحت مستواها لا تجب الزكاة،
+  محسوبة ديناميكيًا استنادًا إلى السعر الحالي للذهب (85 غرامًا) أو
+  الفضة (595 غرامًا). افتراضيًا، تُستخدم العتبة الأقل بين الاثنين
+  (اصطلاح مُفضِّل لمستحقي الزكاة، مقبول على نطاق واسع).
+- **الأصول المؤهَّلة**: النقد، الذمم المدينة القابلة للتحصيل بشكل
+  معقول، مخزون التجارة (بالقيمة السوقية)، الاستثمارات المتوافقة شرعًا،
+  الذهب/الفضة.
+- **الخصومات**: الديون المستحقة على المدى القصير.
 
-**Limitare cunoscută**: calculul nu acoperă cazuri complexe precum zakat
-pe active mixte pe termen lung, zakat agricol, zakat pe efective de
-animale sau situații de parteneriat cu proporții de proprietate neclare —
-acestea necesită consultanță Sharia dedicată.
+**قيد معروف**: لا يغطي الحساب حالات معقّدة مثل زكاة الأصول المختلطة
+طويلة الأجل، أو زكاة الزروع، أو زكاة الأنعام، أو حالات الشراكة بنسب
+ملكية غير واضحة — هذه تتطلب استشارة شرعية مخصّصة.
 
-## 4. Ce NU face acest toolkit
+## 4. ما لا تقوم به هذه الأدوات
 
-- Nu emite fatwa și nu constituie aviz juridic islamic.
-- Nu garantează conformitate legală/reglementară într-o anumită
-  jurisdicție (ex: cerințele unei bănci centrale pot diferi de
-  interpretarea Sharia aplicată aici).
-- Nu înlocuiește revizuirea umană a unui comitet Sharia acreditat pentru
-  decizii de investiție sau structurare de produse financiare.
+- لا تصدر فتوى ولا تشكّل رأيًا فقهيًا إسلاميًا.
+- لا تضمن الامتثال القانوني/التنظيمي في ولاية قضائية معينة (مثلًا:
+  قد تختلف متطلبات بنك مركزي عن التفسير الشرعي المطبَّق هنا).
+- لا تحلّ محل المراجعة البشرية من هيئة رقابة شرعية معتمدة لقرارات
+  الاستثمار أو هيكلة المنتجات المالية.

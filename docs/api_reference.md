@@ -1,18 +1,20 @@
-# Referință API
+# مرجع الواجهة البرمجية
 
-## API REST (FastAPI)
+**المؤلف: Ciprian Ștefan Pleșca**
 
-Pornire locală:
+## واجهة برمجة REST (FastAPI)
+
+التشغيل المحلي:
 
 ```bash
 uvicorn sharia_ai.api.main:app --reload
 ```
 
-Documentație interactivă auto-generată (Swagger UI): `http://localhost:8000/docs`
+توثيق تفاعلي يُولَّد تلقائيًا (Swagger UI): `http://localhost:8000/docs`
 
 ### `GET /health`
 
-Verificare rapidă a stării serviciului.
+فحص سريع لحالة الخدمة.
 
 ```json
 { "status": "ok", "service": "Sharia-AI Compliance Toolkit API", "version": "0.1.0" }
@@ -20,10 +22,10 @@ Verificare rapidă a stării serviciului.
 
 ### `POST /screening/equity`
 
-**Body:**
+**نص الطلب:**
 ```json
 {
-  "name": "Al-Noor Retail Group",
+  "name": "مجموعة النور للتجزئة",
   "sector": "retail",
   "market_cap": 50000000,
   "interest_bearing_debt": 12000000,
@@ -34,23 +36,24 @@ Verificare rapidă a stării serviciului.
 }
 ```
 
-**Răspuns:** `is_compliant` (bool), `purification_ratio` (float), și lista
-detaliată `checks[]` cu fiecare regulă verificată (`rule`, `passed`,
-`value`, `threshold`, `detail`).
+**الاستجابة:** `is_compliant` (منطقية)، `purification_ratio` (عدد
+عشري)، وقائمة `checks[]` مفصّلة بكل قاعدة تم التحقق منها (`rule`،
+`passed`، `value`، `threshold`، `detail`).
 
 ### `POST /screening/contract`
 
-**Body:**
+**نص الطلب:**
 ```json
 { "text": "يُسدد القرض بفائدة سنوية قدرها خمسة بالمئة." }
 ```
 
-**Răspuns:** `has_concerns` (bool), `categories_found[]` (`riba` | `gharar`
-| `maysir`), `flags[]` cu `sentence`, `category`, `matched_term`, `confidence`.
+**الاستجابة:** `has_concerns` (منطقية)، `categories_found[]` (`riba` |
+`gharar` | `maysir`)، `flags[]` تحتوي `sentence`، `category`،
+`matched_term`، `confidence`.
 
 ### `POST /zakat/calculate`
 
-**Body:**
+**نص الطلب:**
 ```json
 {
   "cash_and_equivalents": 2000000,
@@ -60,23 +63,24 @@ detaliată `checks[]` cu fiecare regulă verificată (`rule`, `passed`,
 }
 ```
 
-Opțional: `gold_price_per_gram`, `silver_price_per_gram` (altfel se
-folosesc valorile implicite din `utils/config.py`, configurabile prin
-variabile de mediu `SHARIA_AI_GOLD_PRICE_PER_GRAM` / `SHARIA_AI_SILVER_PRICE_PER_GRAM`).
+اختياري: `gold_price_per_gram`، `silver_price_per_gram` (وإلا تُستخدم
+القيم الافتراضية من `utils/config.py`، القابلة للتهيئة عبر متغيرات
+البيئة `SHARIA_AI_GOLD_PRICE_PER_GRAM` / `SHARIA_AI_SILVER_PRICE_PER_GRAM`).
 
-**Răspuns:** `net_zakatable_wealth`, `nisab_threshold_used`, `nisab_metal`,
-`meets_nisab`, `zakat_due`, `breakdown` (defalcare pe tip de activ).
+**الاستجابة:** `net_zakatable_wealth`، `nisab_threshold_used`،
+`nisab_metal`، `meets_nisab`، `zakat_due`، `breakdown` (تفصيل حسب نوع
+الأصل).
 
 ### `POST /compliance/report`
 
-Rulează pipeline-ul complet (echitate + contracte + Zakat) și returnează
-un raport agregat, identic cu structura produsă de
+يشغّل خط المعالجة الكامل (الأسهم + العقود + الزكاة) ويُعيد تقريرًا
+مُجمَّعًا، مطابقًا للبنية التي ينتجها
 `ShariaCompliancePipeline.run().to_json()`.
 
-**Body:**
+**نص الطلب:**
 ```json
 {
-  "company": { "...": "vezi schema CompanyFinancialsIn" },
+  "company": { "...": "راجع مخطط CompanyFinancialsIn" },
   "contracts": { "contract1.txt": "نص العقد بالعربية..." },
   "zakat_assets": { "cash_and_equivalents": 2000000 }
 }
@@ -84,7 +88,7 @@ un raport agregat, identic cu structura produsă de
 
 ---
 
-## API Python (utilizare directă, fără server)
+## واجهة برمجة بايثون (استخدام مباشر، دون خادم)
 
 ### `sharia_ai.screening.equity_screener`
 
@@ -118,5 +122,5 @@ ShariaCompliancePipeline(equity_screener=None, contract_screener=None, zakat_cal
     .run(company, contracts=None, zakat_assets=None) -> CompanyComplianceReport
 ```
 
-`CompanyComplianceReport.to_json(indent=2) -> str` — export complet, gata
-de arhivare pentru audit.
+`CompanyComplianceReport.to_json(indent=2) -> str` — تصدير كامل، جاهز
+للأرشفة لأغراض التدقيق.
