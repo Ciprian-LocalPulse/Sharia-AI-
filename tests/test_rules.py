@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import FrozenInstanceError
 
 from sharia_ai.screening.rules import (
     EXCLUDED_SECTORS,
@@ -20,7 +21,7 @@ class TestScreeningThresholds(unittest.TestCase):
 
     def test_is_frozen_dataclass(self):
         thresholds = ScreeningThresholds()
-        with self.assertRaises(Exception):
+        with self.assertRaises(FrozenInstanceError):
             thresholds.max_debt_to_market_cap = 0.5
 
     def test_can_override_thresholds(self):

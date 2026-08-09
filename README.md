@@ -8,13 +8,28 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](#)
-[![Tests](https://img.shields.io/badge/tests-16%20passing-brightgreen.svg)](#)
+[![Status](https://img.shields.io/badge/status-beta-yellow.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-156%20passing-brightgreen.svg)](#)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#)
 [![Standard](https://img.shields.io/badge/aligned%20with-AAOIFI%20%2F%20DJIM%20%2F%20FTSE%20Shariah-1b4332.svg)](#)
 
 **المؤلف: Ciprian Ștefan Pleșca**
 
 </div>
+
+---
+
+## Production API Controls
+
+For public deployment, copy `.env.example` and set at least:
+
+- `SHARIA_AI_API_KEYS` for API-key authentication on decision endpoints.
+- `SHARIA_AI_CORS_ALLOWED_ORIGINS` for explicit browser origins.
+- `SHARIA_AI_RATE_LIMIT_PER_MINUTE` to bound per-client request volume.
+- `SHARIA_AI_MAX_CONTRACT_CHARS` to reject oversized contract payloads.
+- `SHARIA_AI_AUDIT_LOG_PATH` to persist compliance decisions in SQLite.
+
+The legacy endpoints remain available, and versioned aliases are exposed under `/v1/...` for backward-compatible API evolution.
 
 ---
 
@@ -47,27 +62,19 @@
 ## البنية المعمارية للنظام
 
 ```mermaid
-graph TB
-    subgraph "طبقة البيانات المدخلة"
-        A1["بيانات مالية للشركة"]
-        A2["نص تعاقدي بالعربية"]
-        A3["أصول قابلة للزكاة"]
-    end
+flowchart TB
+    A1["Company financial data"]
+    A2["Arabic contract text"]
+    A3["Zakat-eligible assets"]
 
-    subgraph "طبقة المعالجة الأساسية — Core Engine"
-        B1["EquityScreener<br/>فحص وفق AAOIFI/DJIM/FTSE"]
-        B2["LexicalRibaDetector<br/>NLP عربي لكشف الربا/الغرر/الميسر"]
-        B3["ZakatCalculator<br/>نصاب ديناميكي"]
-    end
+    B1["EquityScreener<br/>AAOIFI / DJIM / FTSE rules"]
+    B2["LexicalRibaDetector<br/>Arabic NLP: riba / gharar / maysir"]
+    B3["ZakatCalculator<br/>dynamic nisab"]
 
-    subgraph "طبقة التنسيق"
-        C1["ShariaCompliancePipeline"]
-    end
+    C1["ShariaCompliancePipeline"]
 
-    subgraph "طبقة العرض"
-        D1["واجهة REST API — FastAPI"]
-        D2["تقرير JSON قابل للتدقيق"]
-    end
+    D1["REST API — FastAPI"]
+    D2["Auditable JSON report"]
 
     A1 --> B1
     A2 --> B2
@@ -78,11 +85,13 @@ graph TB
     C1 --> D1
     D1 --> D2
 
-    style B1 fill:#1b4332,color:#fff
-    style B2 fill:#1b4332,color:#fff
-    style B3 fill:#1b4332,color:#fff
-    style C1 fill:#7f5539,color:#fff
+    style B1 fill:#1b4332,color:#ffffff
+    style B2 fill:#1b4332,color:#ffffff
+    style B3 fill:#1b4332,color:#ffffff
+    style C1 fill:#7f5539,color:#ffffff
 ```
+
+*مخطّط تدفّق البيانات: طبقة الإدخال (بيانات الشركة، النص التعاقدي، الأصول الزكوية) ← الوحدات الأساسية الثلاث ← خط أنابيب التنسيق ← واجهة REST ← تقرير JSON قابل للتدقيق.*
 
 التوثيق الكامل للبنية المعمارية، بما في ذلك مخططات التسلسل الزمني وتدفّقات كل وحدة على حدة، متاح في [موسوعة المشروع (Wiki)](../../wiki) وفي [`docs/architecture.md`](./docs/architecture.md).
 
@@ -103,10 +112,15 @@ sharia-fintech-ai/
 │   │   └── zakat_calculator.py
 │   ├── pipelines/           # تنسيق شامل -> تقرير موحَّد
 │   │   └── compliance_pipeline.py
-│   ├── api/                 # واجهة REST (FastAPI)
-│   │   └── main.py
-│   └── utils/config.py
-├── tests/                   # 16 اختبارًا وحدويًا (unittest، مكتبة قياسية، بلا اتصال بالكامل)
+│   ├── audit/                # سجلّ تدقيق دائم (SQLite، append-only منطقيًا)
+│   │   └── audit_log.py
+│   ├── api/                 # واجهة REST (FastAPI): مصادقة، تحديد معدّل، CORS
+│   │   ├── main.py
+│   │   └── security.py
+│   └── utils/
+│       ├── config.py         # تهيئة مركزية (بما فيها إعدادات الأمان)
+│       └── logging_setup.py  # تسجيل منظَّم بصيغة JSON
+├── tests/                   # 156 اختبارًا وحدويًا/تكامليًا، تغطية 100%
 ├── data/
 │   ├── sample/               # عقود وأسهم نموذجية
 │   └── rules/                # حدود AAOIFI بصيغة YAML (مرجع خارجي)
@@ -114,9 +128,24 @@ sharia-fintech-ai/
 ├── docs/                     # بنية معمارية، منهجية، مرجع API، خارطة طريق
 ├── assets/                   # ملفات مرئية (شعار، موارد المشروع)
 ├── WHITEPAPER.md
+├── SECURITY.md               # نموذج الأمان الكامل وما هو خارج النطاق
+├── .env.example               # نموذج متغيرات البيئة للنشر
+├── docker-compose.yml         # نشر محلي/إنتاجي بوحدة تخزين دائمة لسجلّ التدقيق
 ├── pyproject.toml / requirements.txt
 └── .github/workflows/ci.yml
 ```
+
+### الأمان وجاهزية الإنتاج (منذ 0.2.0)
+
+الواجهة البرمجية REST محمية افتراضيًا بـ:
+- **مصادقة عبر مفتاح API** (رأس `X-API-Key`، مقارنة بزمن ثابت) — عطِّلها فقط محليًا بترك `SHARIA_AI_API_KEYS` فارغًا.
+- **تحديد معدّل الطلبات** لكل عميل (قابل للتهيئة عبر `SHARIA_AI_RATE_LIMIT_*`).
+- **CORS صريح** (بلا `*` افتراضي) — يُفعَّل فقط بضبط `SHARIA_AI_CORS_ORIGINS`.
+- **حدود حجم للمُدخلات** لمنع هجمات DoS عبر نصوص عقود ضخمة.
+- **تسجيل منظَّم (JSON)** مع معرِّف طلب فريد لكل استدعاء.
+- **سجلّ تدقيق دائم (SQLite)** لكل قرار امتثال، عبر `/v1/audit/recent` (محمي).
+
+راجع [`SECURITY.md`](./SECURITY.md) للنموذج الكامل وحدوده المعروفة، و[`.env.example`](./.env.example) لكل متغيرات البيئة القابلة للضبط قبل النشر.
 
 ---
 
@@ -144,9 +173,41 @@ PYTHONPATH=src python3 examples/demo_screening.py
 ### تشغيل الواجهة البرمجية محليًا
 
 ```bash
+# انسخ نموذج متغيرات البيئة واملأه (مفتاح API إلزامي في الإنتاج، اختياري محليًا)
+cp .env.example .env
+
 uvicorn sharia_ai.api.main:app --reload
 # توثيق تفاعلي: http://localhost:8000/docs
 ```
+
+### التشغيل عبر Docker Compose (مُوصى به للنشر)
+
+```bash
+cp .env.example .env   # اضبط SHARIA_AI_API_KEYS قبل أي نشر حقيقي
+docker compose up --build
+```
+
+يشمل ذلك وحدة تخزين دائمة (volume) لسجلّ التدقيق (`/data`)، بحيث لا يُفقد عند إعادة إنشاء الحاوية.
+
+### استدعاء الواجهة البرمجية (مع مصادقة)
+
+```bash
+curl -X POST http://localhost:8000/v1/screening/equity \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $SHARIA_AI_API_KEYS" \
+  -d '{
+        "name": "Al-Noor Retail Group",
+        "sector": "retail",
+        "market_cap": 50000000,
+        "interest_bearing_debt": 12000000,
+        "cash_and_interest_bearing_deposits": 8000000,
+        "accounts_receivable": 15000000,
+        "total_revenue": 40000000,
+        "haram_revenue": 500000
+      }'
+```
+
+> **ملاحظة أمنية:** إذا تُرك `SHARIA_AI_API_KEYS` فارغًا، تُعطَّل المصادقة تلقائيًا (وضع تطوير محلي فقط). يجب ضبط مفتاح واحد على الأقل قبل أي نشر يتجاوز جهاز التطوير المحلي. راجع [`SECURITY.md`](./SECURITY.md).
 
 ---
 
@@ -206,10 +267,14 @@ print(report.summary())
 - [x] كاشف الربا/الغرر/الميسر المعجمي للعربية (بلا اتصال، حتمي)
 - [x] حاسبة الزكاة بنصاب ديناميكي
 - [x] خط أنابيب التنسيق + واجهة REST
+- [x] مصادقة عبر مفتاح API + تحديد معدّل الطلبات + CORS صريح
+- [x] تسجيل منظَّم (JSON) + سجلّ تدقيق دائم (SQLite)
 - [ ] دمج نموذج محوّل (AraBERT مُعاد ضبطه) للتقييم الدلالي
 - [ ] دعم التكافل (التأمين الإسلامي) والصكوك (السندات الإسلامية)
 - [ ] لوحة تحكّم ويب لتصوّر تقارير الامتثال
 - [ ] موصِّلات لمصادر بيانات مالية حيّة (أسواق MENA)
+- [ ] تدقيق تحديد معدّل الطلبات موزَّع (Redis) للنشر متعدد النسخ
+- [ ] صلاحيات متدرّجة (RBAC) بدلاً من مفتاح API واحد بصلاحية كاملة
 
 ---
 
