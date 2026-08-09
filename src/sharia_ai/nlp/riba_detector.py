@@ -167,7 +167,7 @@ class HybridContractScreener:
     def __init__(
         self,
         lexical_detector: LexicalRibaDetector | None = None,
-        ml_classifier: "RibaClassifierProtocol | None" = None,
+        ml_classifier: RibaClassifierProtocol | None = None,
     ):
         self.lexical_detector = lexical_detector or LexicalRibaDetector()
         self.ml_classifier = ml_classifier

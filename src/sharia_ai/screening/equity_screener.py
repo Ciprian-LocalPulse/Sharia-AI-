@@ -17,7 +17,6 @@ audit și pentru comitetele Sharia care trebuie să poată justifica decizia.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .rules import EXCLUDED_SECTORS, ScreeningThresholds
 
@@ -42,8 +41,8 @@ class RuleCheck:
 
     rule: str
     passed: bool
-    value: Optional[float]
-    threshold: Optional[float]
+    value: float | None
+    threshold: float | None
     detail: str
 
 
