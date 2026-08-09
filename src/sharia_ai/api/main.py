@@ -14,10 +14,12 @@ from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field, field_validator
 
+from ..audit.audit_log import AuditLog
 from ..nlp.riba_detector import HybridContractScreener
 from ..pipelines.compliance_pipeline import ShariaCompliancePipeline, asdict_safe
 from ..screening.equity_screener import CompanyFinancials, EquityScreener
 from ..utils.config import config
+from ..utils.logging_setup import configure_logging, get_logger, log_with_fields
 from ..zakat.zakat_calculator import ZakatAssets, ZakatCalculator
 from .audit import AuditEvent, SQLiteAuditStore
 from .observability import FixedWindowRateLimiter, logger, metrics
@@ -29,6 +31,7 @@ app = FastAPI(
         "Open-source toolkit for Sharia-compliant fintech screening. "
         "This API is a decision-support tool and does not replace a qualified Sharia board."
     ),
+    lifespan=lifespan,
 )
 
 if not logging.getLogger().handlers:  # pragma: no cover
@@ -172,6 +175,7 @@ class ComplianceReportIn(BaseModel):
 
 @app.get("/health")
 def health() -> dict:
+    """فحص صحة بدون مصادقة، مخصَّص لأدوات orchestration (Docker/K8s)."""
     return {"status": "ok", "service": config.api_title, "version": config.api_version}
 
 

@@ -1,0 +1,24 @@
+services:
+  sharia-ai:
+    build: .
+    image: sharia-ai:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # مسار سجلّ التدقيق داخل الحاوية — يُخزَّن على وحدة تخزين دائمة (volume)
+      # كي لا يُفقد عند إعادة إنشاء الحاوية.
+      SHARIA_AI_AUDIT_DB_PATH: /data/sharia_ai_audit.sqlite3
+    volumes:
+      - sharia-ai-audit-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  sharia-ai-audit-data:
