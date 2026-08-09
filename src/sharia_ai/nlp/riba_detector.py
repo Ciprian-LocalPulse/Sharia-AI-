@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
-from .arabic_preprocessing import clitic_variants, normalize_arabic, sentence_split, tokenize
+from .arabic_preprocessing import clitic_variants, sentence_split, tokenize
 
 
 class ConcernCategory(str, Enum):

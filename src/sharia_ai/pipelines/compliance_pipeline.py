@@ -10,7 +10,7 @@ orice integrare externă (dashboard, ERP, sistem de audit).
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
 from ..nlp.riba_detector import DetectionReport, HybridContractScreener
