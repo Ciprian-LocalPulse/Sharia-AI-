@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "مجموعة أدوات مفتوحة المصدر للبيانات والذكاء الاصطناعي من أجل الامتثال في التقنية المالية المتوافقة مع الشريعة (فرز الأسهم، كشف الربا/الغرر/الميسر في العقود العربية، حساب الزكاة)."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Ciprian Ștefan Pleșca" }
 ]
@@ -27,7 +28,6 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -48,6 +48,7 @@ dependencies = [
 dev = [
     "pytest>=8.0,<9.0",
     "pytest-cov>=5.0,<6.0",
+    "httpx2>=2.10,<3.0",
     "ruff>=0.4,<1.0",
     "mypy>=1.9,<2.0",
 ]

@@ -2,35 +2,39 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["main", "add-missing-tests"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
 
 jobs:
   test:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: تهيئة بايثون ${{ matrix.python-version }}
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
-      - name: تثبيت الاعتماديات
+      - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          python -m pip install -e ".[dev,data]"
 
-      - name: فحص جودة الكود (ruff)
-        run: ruff check src tests
+      - name: Ruff
+        run: python -m ruff check .
 
-      - name: فحص الأنواع (mypy)
-        run: mypy src || true  # غير مانع في مرحلة الألفا؛ يصبح صارمًا في الإصدار 1.0
+      - name: Mypy
+        run: python -m mypy src
 
-      - name: تشغيل الاختبارات مع تغطية الكود
-        run: pytest --cov=sharia_ai --cov-report=term-missing
+      - name: Tests
+        run: python -m pytest --cov=sharia_ai --cov-report=term-missing --cov-fail-under=100

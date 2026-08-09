@@ -43,7 +43,7 @@ def asdict_safe(report: CompanyComplianceReport) -> dict:
             return [convert(v) for v in obj]
         if hasattr(obj, "__dataclass_fields__"):
             return {k: convert(v) for k, v in asdict(obj, dict_factory=dict).items()}
-        if hasattr(obj, "value") and not isinstance(obj, (int, float, str)):
+        if hasattr(obj, "value") and not isinstance(obj, (int, float)):
             # تعداد (Enum)
             return obj.value
         return obj

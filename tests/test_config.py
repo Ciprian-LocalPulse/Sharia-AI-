@@ -1,6 +1,7 @@
 import importlib
 import os
 import unittest
+from dataclasses import FrozenInstanceError
 
 
 class TestAppConfigDefaults(unittest.TestCase):
@@ -46,7 +47,7 @@ class TestAppConfigDefaults(unittest.TestCase):
         self.assertEqual(self.config_module.config.api_version, "0.1.0")
 
     def test_config_is_frozen(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(FrozenInstanceError):
             self.config_module.config.gold_price_per_gram = 100.0
 
 
