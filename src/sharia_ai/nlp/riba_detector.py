@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
-from .arabic_preprocessing import clitic_variants, normalize_arabic, sentence_split, tokenize
+from .arabic_preprocessing import clitic_variants, sentence_split, tokenize
 
 
 class ConcernCategory(str, Enum):
@@ -169,7 +169,7 @@ class HybridContractScreener:
     def __init__(
         self,
         lexical_detector: LexicalRibaDetector | None = None,
-        ml_classifier: "RibaClassifierProtocol | None" = None,
+        ml_classifier: RibaClassifierProtocol | None = None,
     ):
         self.lexical_detector = lexical_detector or LexicalRibaDetector()
         self.ml_classifier = ml_classifier
