@@ -47,27 +47,19 @@
 ## البنية المعمارية للنظام
 
 ```mermaid
-graph TB
-    subgraph "طبقة البيانات المدخلة"
-        A1["بيانات مالية للشركة"]
-        A2["نص تعاقدي بالعربية"]
-        A3["أصول قابلة للزكاة"]
-    end
+flowchart TB
+    A1["Company financial data"]
+    A2["Arabic contract text"]
+    A3["Zakat-eligible assets"]
 
-    subgraph "طبقة المعالجة الأساسية — Core Engine"
-        B1["EquityScreener<br/>فحص وفق AAOIFI/DJIM/FTSE"]
-        B2["LexicalRibaDetector<br/>NLP عربي لكشف الربا/الغرر/الميسر"]
-        B3["ZakatCalculator<br/>نصاب ديناميكي"]
-    end
+    B1["EquityScreener<br/>AAOIFI / DJIM / FTSE rules"]
+    B2["LexicalRibaDetector<br/>Arabic NLP: riba / gharar / maysir"]
+    B3["ZakatCalculator<br/>dynamic nisab"]
 
-    subgraph "طبقة التنسيق"
-        C1["ShariaCompliancePipeline"]
-    end
+    C1["ShariaCompliancePipeline"]
 
-    subgraph "طبقة العرض"
-        D1["واجهة REST API — FastAPI"]
-        D2["تقرير JSON قابل للتدقيق"]
-    end
+    D1["REST API — FastAPI"]
+    D2["Auditable JSON report"]
 
     A1 --> B1
     A2 --> B2
@@ -78,11 +70,13 @@ graph TB
     C1 --> D1
     D1 --> D2
 
-    style B1 fill:#1b4332,color:#fff
-    style B2 fill:#1b4332,color:#fff
-    style B3 fill:#1b4332,color:#fff
-    style C1 fill:#7f5539,color:#fff
+    style B1 fill:#1b4332,color:#ffffff
+    style B2 fill:#1b4332,color:#ffffff
+    style B3 fill:#1b4332,color:#ffffff
+    style C1 fill:#7f5539,color:#ffffff
 ```
+
+*مخطّط تدفّق البيانات: طبقة الإدخال (بيانات الشركة، النص التعاقدي، الأصول الزكوية) ← الوحدات الأساسية الثلاث ← خط أنابيب التنسيق ← واجهة REST ← تقرير JSON قابل للتدقيق.*
 
 التوثيق الكامل للبنية المعمارية، بما في ذلك مخططات التسلسل الزمني وتدفّقات كل وحدة على حدة، متاح في [موسوعة المشروع (Wiki)](../../wiki) وفي [`docs/architecture.md`](./docs/architecture.md).
 
