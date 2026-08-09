@@ -1,0 +1,46 @@
+# aaoifi_thresholds.yaml
+# Praguri de referință pentru screening-ul de echitate Sharia-compliant.
+# Aceste valori oglindesc implementarea din src/sharia_ai/screening/rules.py
+# și sunt furnizate aici în format YAML pentru integrare cu alte sisteme
+# (ex: dashboard de configurare, audit extern) fără a necesita import Python.
+#
+# ATENȚIE: modificarea acestor valori nu afectează automat codul Python —
+# vezi docs/architecture.md, secțiunea "Configurare externă" pentru un
+# exemplu de loader YAML -> ScreeningThresholds.
+
+business_screening:
+  max_haram_revenue_ratio: 0.05
+
+financial_ratios:
+  max_debt_to_market_cap: 0.33
+  max_cash_interest_to_market_cap: 0.33
+  max_receivables_to_market_cap: 0.49
+
+purification:
+  purification_threshold: 0.05
+
+excluded_sectors:
+  - alcohol
+  - gambling
+  - conventional_banking
+  - conventional_insurance
+  - pork
+  - adult_entertainment
+  - tobacco
+  - weapons_controversial
+  - media_immoral
+
+zakat:
+  rate: 0.025
+  nisab_gold_grams: 85.0
+  nisab_silver_grams: 595.0
+
+metadata:
+  methodology_references:
+    - "AAOIFI Shari'ah Standard No. 21 (Financial Paper - Shares/Bonds)"
+    - "Dow Jones Islamic Market (DJIM) Index Methodology"
+    - "FTSE Shariah Global Equity Index Series - Ground Rules"
+  disclaimer: >
+    Aceste praguri reprezintă interpretări metodologice comune în industrie,
+    nu o fatwa. Utilizarea instituțională necesită validarea unui comitet
+    Sharia acreditat (Sharia Supervisory Board).

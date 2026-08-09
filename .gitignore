@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Testare / acoperire
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Variabile de mediu locale
+.env
+.env.local
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Output-uri generate local (rapoarte, exporturi)
+/out/
+*.local.json
