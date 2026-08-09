@@ -8,6 +8,9 @@ COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 RUN python -m pip install --upgrade pip \
     && python -m pip install .
+# دليل لسجلّ التدقيق الدائم (SQLite) — يُفترض ربطه بوحدة تخزين خارجية
+# (docker volume / K8s PersistentVolume) عبر SHARIA_AI_AUDIT_DB_PATH=/data/...
+RUN mkdir -p /data && chown sharia:sharia /data
 USER sharia
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

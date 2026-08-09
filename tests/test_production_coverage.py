@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fastapi import HTTPException
 
@@ -131,11 +131,15 @@ class TestApiDefensiveBranch(unittest.TestCase):
             )
         )
 
+        fake_request = MagicMock()
+        fake_request.headers = {}
+        fake_request.client.host = "127.0.0.1"
+
         with (
             patch("sharia_ai.api.main.CompanyFinancials", side_effect=TypeError("bad")),
             self.assertRaises(HTTPException) as raised,
         ):
-            compliance_report(payload)
+            compliance_report(payload, fake_request, api_key="test")
 
         self.assertEqual(raised.exception.status_code, 422)
 
