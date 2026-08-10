@@ -133,6 +133,44 @@ class TestProductionApiControls(unittest.TestCase):
                 {"ok": True},
             )
 
+    def test_modern_audit_can_be_disabled(self):
+        class BrokenAuditLog:
+            def record(self, **kwargs: object) -> None:
+                raise AssertionError("modern audit log should not be called")
+
+        disabled_config = SimpleNamespace(audit_enabled=False)
+        request = SimpleNamespace(state=SimpleNamespace(request_id="audit-disabled"))
+        with (
+            patch.object(api_module, "config", disabled_config),
+            patch.object(api_module, "_audit_log", BrokenAuditLog()),
+        ):
+            api_module._record_audit(
+                cast(Any, request),
+                "endpoint",
+                "subject",
+                "decision",
+                {"ok": True},
+            )
+
+    def test_modern_audit_write_failure_is_logged_not_raised(self):
+        class BrokenAuditLog:
+            def record(self, **kwargs: object) -> None:
+                raise OSError("modern audit full")
+
+        request = SimpleNamespace(
+            headers={},
+            client=None,
+            state=SimpleNamespace(request_id="modern-audit-failure"),
+        )
+        with patch.object(api_module, "_audit_log", BrokenAuditLog()):
+            api_module._record_audit(
+                cast(Any, request),
+                "endpoint",
+                "subject",
+                "decision",
+                {"ok": True},
+            )
+
     def test_screening_writes_sqlite_audit_event(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
             db_path = f"{temp_dir}/audit.sqlite3"
