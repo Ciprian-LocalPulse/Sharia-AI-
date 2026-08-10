@@ -27,7 +27,7 @@ from ..utils.config import config
 _API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-def _constant_time_in(candidate: str, valid_keys: frozenset[str]) -> bool:
+def _constant_time_in(candidate: str, valid_keys: frozenset[str] | tuple[str, ...]) -> bool:
     """يقارن `candidate` بكل مفتاح صالح باستخدام مقارنة بزمن ثابت،
     لتفادي تسريب معلومات عبر توقيت الاستجابة."""
     matched = False

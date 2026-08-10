@@ -37,6 +37,23 @@ def _env_csv(key: str) -> tuple[str, ...]:
     return tuple(value.strip() for value in raw.split(",") if value.strip())
 
 
+def _env_bool(key: str, default: bool) -> bool:
+    raw = os.getenv(key)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_str_set(key: str, default: frozenset[str]) -> frozenset[str]:
+    values = _env_csv(key)
+    return frozenset(values) if values else default
+
+
+def _env_list(key: str, default: list[str]) -> list[str]:
+    values = _env_csv(key)
+    return list(values) if values else list(default)
+
+
 @dataclass(frozen=True)
 class AppConfig:
     # --- بيانات مالية أساسية ---
@@ -45,9 +62,10 @@ class AppConfig:
     api_title: str = "Sharia-AI Compliance Toolkit API"
     api_version: str = "0.2.0"
     default_currency: str = os.getenv("SHARIA_AI_CURRENCY", "USD")
-    api_keys: tuple[str, ...] = _env_csv("SHARIA_AI_API_KEYS")
-    cors_allowed_origins: tuple[str, ...] = _env_csv("SHARIA_AI_CORS_ALLOWED_ORIGINS")
-    rate_limit_per_minute: int = _env_int("SHARIA_AI_RATE_LIMIT_PER_MINUTE", 120)
+    rate_limit_per_minute: int = _env_int(
+        "SHARIA_AI_RATE_LIMIT_PER_MINUTE",
+        _env_int("SHARIA_AI_RATE_LIMIT_REQUESTS", 120),
+    )
     max_contract_chars: int = _env_int("SHARIA_AI_MAX_CONTRACT_CHARS", 20_000)
     audit_log_path: str = os.getenv(
         "SHARIA_AI_AUDIT_LOG_PATH",
@@ -64,7 +82,10 @@ class AppConfig:
 
     # --- الأمان: CORS ---
     cors_allowed_origins: list[str] = field(
-        default_factory=lambda: _env_list("SHARIA_AI_CORS_ORIGINS", [])
+        default_factory=lambda: _env_list(
+            "SHARIA_AI_CORS_ORIGINS",
+            _env_list("SHARIA_AI_CORS_ALLOWED_ORIGINS", []),
+        )
     )
 
     # --- تحديد معدّل الطلبات (Rate limiting) ---

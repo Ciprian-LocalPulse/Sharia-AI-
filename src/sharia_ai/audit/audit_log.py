@@ -18,6 +18,7 @@ import json
 import sqlite3
 import threading
 import uuid
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,14 +47,13 @@ class AuditLog:
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=5.0)
-        conn.execute("PRAGMA journal_mode=WAL;")
         return conn
 
     def _ensure_schema(self) -> None:
         parent_dir = Path(self.db_path).parent
         if str(parent_dir) not in ("", "."):
             parent_dir.mkdir(parents=True, exist_ok=True)
-        with self._lock, self._connect() as conn:
+        with self._lock, closing(self._connect()) as conn, conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit_entries (
@@ -73,7 +73,6 @@ class AuditLog:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_entries(created_at_utc)"
             )
-            conn.commit()
 
     def record(
         self,
@@ -92,7 +91,7 @@ class AuditLog:
             payload_json=json.dumps(payload, ensure_ascii=False, default=str),
             client_id=client_id,
         )
-        with self._lock, self._connect() as conn:
+        with self._lock, closing(self._connect()) as conn, conn:
             conn.execute(
                 """
                 INSERT INTO audit_entries
@@ -110,7 +109,6 @@ class AuditLog:
                     entry.client_id,
                 ),
             )
-            conn.commit()
         return entry
 
     def fetch_recent(self, limit: int = 50, event_type: str | None = None) -> list[AuditEntry]:
@@ -122,11 +120,11 @@ class AuditLog:
         query += " ORDER BY created_at_utc DESC LIMIT ?"
         params = params + (limit,)
 
-        with self._lock, self._connect() as conn:
+        with self._lock, closing(self._connect()) as conn:
             rows = conn.execute(query, params).fetchall()
         return [AuditEntry(*row) for row in rows]
 
     def count(self) -> int:
-        with self._lock, self._connect() as conn:
+        with self._lock, closing(self._connect()) as conn:
             (total,) = conn.execute("SELECT COUNT(*) FROM audit_entries").fetchone()
         return int(total)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,7 +28,7 @@ class SQLiteAuditStore:
 
     def record(self, event: AuditEvent) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._lock, sqlite3.connect(self.db_path) as connection:
+        with self._lock, closing(sqlite3.connect(self.db_path)) as connection, connection:
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit_events (
@@ -56,4 +57,3 @@ class SQLiteAuditStore:
                     json.dumps(event.payload, ensure_ascii=False, sort_keys=True),
                 ),
             )
-            connection.commit()

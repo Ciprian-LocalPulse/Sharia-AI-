@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import secrets
 import time
+from contextlib import asynccontextmanager
 from typing import Annotated, Any
 from uuid import uuid4
 
@@ -23,6 +24,25 @@ from ..utils.logging_setup import configure_logging, get_logger, log_with_fields
 from ..zakat.zakat_calculator import ZakatAssets, ZakatCalculator
 from .audit import AuditEvent, SQLiteAuditStore
 from .observability import FixedWindowRateLimiter, logger, metrics
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    configure_logging(config.log_level)
+    app_logger = get_logger(__name__)
+    log_with_fields(
+        app_logger,
+        logging.INFO,
+        "api_startup",
+        service=config.api_title,
+        version=config.api_version,
+        environment=config.environment,
+    )
+    try:
+        yield
+    finally:
+        log_with_fields(app_logger, logging.INFO, "api_shutdown", service=config.api_title)
+
 
 app = FastAPI(
     title=config.api_title,
@@ -50,6 +70,7 @@ _equity_screener = EquityScreener()
 _contract_screener = HybridContractScreener()
 _rate_limiter = FixedWindowRateLimiter(config.rate_limit_per_minute)
 _audit_store = SQLiteAuditStore(config.audit_log_path)
+_audit_log = AuditLog(config.audit_db_path)
 _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 FiniteNonNegative = Annotated[float, Field(ge=0.0, allow_inf_nan=False)]
@@ -78,7 +99,10 @@ async def request_context_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=429,
             content={"detail": "rate limit exceeded", "request_id": request_id},
-            headers={"X-Request-ID": request_id},
+            headers={
+                "X-Request-ID": request_id,
+                "Retry-After": str(config.rate_limit_window_seconds),
+            },
         )
 
     started = time.perf_counter()
@@ -110,20 +134,39 @@ def require_api_key(api_key: str | None = Depends(_api_key_header)) -> None:
 
 def _record_audit(
     request: Request,
-    endpoint: str,
+    event_type: str,
     subject: str,
     decision: str,
     payload: dict[str, Any],
 ) -> None:
+    legacy_endpoint = {
+        "equity_screening": "screening.equity",
+        "contract_screening": "screening.contract",
+        "zakat_calculation": "zakat.calculate",
+        "compliance_report": "compliance.report",
+    }.get(event_type, event_type)
     try:
         _audit_store.record(
             AuditEvent(
                 request_id=request.state.request_id,
-                endpoint=endpoint,
+                endpoint=legacy_endpoint,
                 subject=subject,
                 decision=decision,
                 payload=payload,
             )
+        )
+    except OSError as exc:
+        logger.warning("audit_write_failed request_id=%s error=%s", request.state.request_id, exc)
+
+    if not getattr(config, "audit_enabled", True):
+        return
+    try:
+        _audit_log.record(
+            event_type=event_type,
+            subject=subject,
+            outcome_summary=decision,
+            payload={"request_id": request.state.request_id, **payload},
+            client_id=_client_key(request) if hasattr(request, "headers") else "unknown",
         )
     except OSError as exc:
         logger.warning("audit_write_failed request_id=%s error=%s", request.state.request_id, exc)
@@ -197,7 +240,7 @@ def screen_equity(payload: CompanyFinancialsIn, request: Request) -> dict:
     }
     _record_audit(
         request,
-        "screening.equity",
+        "equity_screening",
         result.company,
         "compliant" if result.is_compliant else "non_compliant",
         response,
@@ -224,7 +267,7 @@ def screen_contract(payload: ContractTextIn, request: Request) -> dict:
     }
     _record_audit(
         request,
-        "screening.contract",
+        "contract_screening",
         "contract_text",
         "concerns_found" if report.has_concerns else "no_concerns",
         {
@@ -258,7 +301,7 @@ def calculate_zakat(payload: ZakatAssetsIn, request: Request) -> dict:
     response = result.__dict__
     _record_audit(
         request,
-        "zakat.calculate",
+        "zakat_calculation",
         "assets",
         "zakat_due" if result.zakat_due else "no_zakat_due",
         response,
@@ -300,7 +343,7 @@ def compliance_report(payload: ComplianceReportIn, request: Request | None = Non
     if request is not None:
         _record_audit(
             request,
-            "compliance.report",
+            "compliance_report",
             report.company_name,
             report.overall_status,
             {
@@ -313,3 +356,16 @@ def compliance_report(payload: ComplianceReportIn, request: Request | None = Non
             },
         )
     return response
+
+
+@app.get("/v1/audit/recent", dependencies=[Depends(require_api_key)])
+def audit_recent(limit: int = 50, event_type: str | None = None) -> dict:
+    if not config.audit_enabled:
+        raise HTTPException(status_code=503, detail="audit trail is disabled")
+    bounded_limit = min(max(limit, 1), 250)
+    entries = _audit_log.fetch_recent(limit=bounded_limit, event_type=event_type)
+    return {
+        "total_entries": _audit_log.count(),
+        "returned": len(entries),
+        "entries": [entry.__dict__ for entry in entries],
+    }
