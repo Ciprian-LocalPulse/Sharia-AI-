@@ -100,7 +100,10 @@ class TestClientIdentifier(unittest.TestCase):
     def test_uses_api_key_header_when_present(self):
         request = MagicMock()
         request.headers = {"X-API-Key": "abc123"}
-        self.assertEqual(client_identifier(request), "key:abc123")
+        identifier = client_identifier(request)
+        self.assertTrue(identifier.startswith("key:"))
+        self.assertNotIn("abc123", identifier)
+        self.assertEqual(identifier, client_identifier(request))
 
     def test_falls_back_to_client_ip(self):
         request = MagicMock()

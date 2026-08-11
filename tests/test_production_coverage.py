@@ -90,7 +90,10 @@ class TestSummariesAndBranches(unittest.TestCase):
     def test_pipeline_handles_none_inside_contract_mapping(self):
         pipeline = ShariaCompliancePipeline()
         report = pipeline.run(company=_company(), contracts={"فارغ": ""})
-        self.assertEqual(report.overall_status, "متوافق (خاضع لمراجعة هيئة الرقابة الشرعية)")
+        self.assertEqual(
+            report.overall_status,
+            "متوافق (خاضع لمراجعة هيئة الرقابة الشرعية)",
+        )
 
     def test_asdict_safe_converts_direct_enum_value(self):
         self.assertEqual(asdict_safe(ConcernCategory.RIBA), "riba")

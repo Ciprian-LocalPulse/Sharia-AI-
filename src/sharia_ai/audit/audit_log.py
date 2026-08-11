@@ -47,6 +47,7 @@ class AuditLog:
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=5.0)
+        conn.execute("PRAGMA journal_mode=DELETE;")
         return conn
 
     def _ensure_schema(self) -> None:

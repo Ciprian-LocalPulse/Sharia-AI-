@@ -32,11 +32,6 @@ def _env_int(key: str, default: int) -> int:
         return default
 
 
-def _env_csv(key: str) -> tuple[str, ...]:
-    raw = os.getenv(key, "")
-    return tuple(value.strip() for value in raw.split(",") if value.strip())
-
-
 def _env_bool(key: str, default: bool) -> bool:
     raw = os.getenv(key)
     if raw is None:
@@ -44,14 +39,18 @@ def _env_bool(key: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _env_str_set(key: str, default: frozenset[str]) -> frozenset[str]:
-    values = _env_csv(key)
-    return frozenset(values) if values else default
-
-
 def _env_list(key: str, default: list[str]) -> list[str]:
-    values = _env_csv(key)
-    return list(values) if values else list(default)
+    raw = os.getenv(key)
+    if raw is None:
+        return list(default)
+    return [value.strip() for value in raw.split(",") if value.strip()]
+
+
+def _env_str_set(key: str, default: frozenset[str]) -> frozenset[str]:
+    raw = os.getenv(key)
+    if raw is None:
+        return default
+    return frozenset(value.strip() for value in raw.split(",") if value.strip())
 
 
 @dataclass(frozen=True)

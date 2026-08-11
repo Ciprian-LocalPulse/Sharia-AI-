@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import sqlite3
 import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Any
@@ -68,9 +69,9 @@ if config.cors_allowed_origins:  # pragma: no cover
 
 _equity_screener = EquityScreener()
 _contract_screener = HybridContractScreener()
-_rate_limiter = FixedWindowRateLimiter(config.rate_limit_per_minute)
+_rate_limiter = FixedWindowRateLimiter(config.rate_limit_requests)
 _audit_store = SQLiteAuditStore(config.audit_log_path)
-_audit_log = AuditLog(config.audit_db_path)
+_audit_log: AuditLog | None = None
 _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 FiniteNonNegative = Annotated[float, Field(ge=0.0, allow_inf_nan=False)]
@@ -122,14 +123,34 @@ async def request_context_middleware(request: Request, call_next):
         elapsed_ms,
     )
     return response
-
-
 def require_api_key(api_key: str | None = Depends(_api_key_header)) -> None:
-    if not config.api_keys:
+    if not getattr(config, "require_api_key", True) or not config.api_keys:
         return
     if api_key and any(secrets.compare_digest(api_key, valid) for valid in config.api_keys):
         return
     raise HTTPException(status_code=401, detail="valid API key required")
+
+
+def _require_configured_api_key(api_key: str | None = Depends(_api_key_header)) -> None:
+    if not config.api_keys:
+        raise HTTPException(status_code=401, detail="audit access requires configured API keys")
+    require_api_key(api_key)
+
+
+def _event_type(endpoint: str) -> str:
+    return {
+        "screening.equity": "equity_screening",
+        "screening.contract": "contract_screening",
+        "zakat.calculate": "zakat_calculation",
+        "compliance.report": "compliance_report",
+    }.get(endpoint, endpoint)
+
+
+def _legacy_audit_log() -> AuditLog:
+    global _audit_log
+    if _audit_log is None:
+        _audit_log = AuditLog(getattr(config, "audit_db_path", "sharia_ai_audit.sqlite3"))
+    return _audit_log
 
 
 def _record_audit(
@@ -155,20 +176,20 @@ def _record_audit(
                 payload=payload,
             )
         )
-    except OSError as exc:
+    except (OSError, sqlite3.Error) as exc:
         logger.warning("audit_write_failed request_id=%s error=%s", request.state.request_id, exc)
 
     if not getattr(config, "audit_enabled", True):
         return
     try:
-        _audit_log.record(
+        _legacy_audit_log().record(
             event_type=event_type,
             subject=subject,
             outcome_summary=decision,
             payload={"request_id": request.state.request_id, **payload},
             client_id=_client_key(request) if hasattr(request, "headers") else "unknown",
         )
-    except OSError as exc:
+    except (OSError, sqlite3.Error) as exc:
         logger.warning("audit_write_failed request_id=%s error=%s", request.state.request_id, exc)
 
 
@@ -218,13 +239,57 @@ class ComplianceReportIn(BaseModel):
 
 @app.get("/health")
 def health() -> dict:
-    """فحص صحة بدون مصادقة، مخصَّص لأدوات orchestration (Docker/K8s)."""
+    """ŮŘ­Řµ ŘµŘ­Ř© Ř¨ŘŻŮŮ† Ů…ŘµŘ§ŘŻŮ‚Ř©ŘŚ Ů…Ř®ŘµŮŽŮ‘Řµ Ů„ŘŁŘŻŮŘ§ŘŞ orchestration (Docker/K8s)."""
     return {"status": "ok", "service": config.api_title, "version": config.api_version}
+
+
+@app.get("/ready")
+@app.get("/v1/ready")
+def readiness() -> dict:
+    audit_status = "disabled"
+    hash_chain_valid = None
+    if config.audit_enabled:
+        audit_status = "ok"
+        try:
+            hash_chain_valid = _audit_store.verify_hash_chain()
+            if not hash_chain_valid:
+                audit_status = "hash_chain_invalid"
+        except (OSError, sqlite3.Error):
+            audit_status = "unavailable"
+    return {
+        "status": "ready" if audit_status in {"disabled", "ok"} else "degraded",
+        "audit": audit_status,
+        "audit_hash_chain_valid": hash_chain_valid,
+        "version": config.api_version,
+    }
 
 
 @app.get("/metrics", dependencies=[Depends(require_api_key)])
 def api_metrics() -> dict:
     return metrics.snapshot()
+
+
+@app.get("/v1/audit/recent", dependencies=[Depends(_require_configured_api_key)])
+def audit_recent(limit: int = 50, event_type: str | None = None) -> dict:
+    if not config.audit_enabled:
+        raise HTTPException(status_code=503, detail="audit logging is disabled")
+    reverse_map = {
+        "equity_screening": "screening.equity",
+        "contract_screening": "screening.contract",
+        "zakat_calculation": "zakat.calculate",
+        "compliance_report": "compliance.report",
+    }
+    events = _audit_store.fetch_recent(
+        limit=min(max(limit, 1), 200),
+        endpoint=reverse_map.get(event_type, event_type) if event_type else None,
+    )
+    entries = [{"event_type": _event_type(event.endpoint)} for event in events]
+    return {
+        "total_entries": _audit_store.count(),
+        "returned": len(entries),
+        "hash_chain_valid": _audit_store.verify_hash_chain(),
+        "entries": entries,
+    }
 
 
 @app.post("/v1/screening/equity", dependencies=[Depends(require_api_key)])
@@ -246,7 +311,6 @@ def screen_equity(payload: CompanyFinancialsIn, request: Request) -> dict:
         response,
     )
     return response
-
 
 @app.post("/v1/screening/contract", dependencies=[Depends(require_api_key)])
 @app.post("/screening/contract", dependencies=[Depends(require_api_key)])
@@ -315,7 +379,11 @@ def compliance_report_endpoint(payload: ComplianceReportIn, request: Request) ->
     return compliance_report(payload, request=request)
 
 
-def compliance_report(payload: ComplianceReportIn, request: Request | None = None) -> dict:
+def compliance_report(
+    payload: ComplianceReportIn,
+    request: Request | None = None,
+    api_key: str | None = None,
+) -> dict:
     zakat_calculator = None
     zakat_assets = None
     if payload.zakat_assets is not None:
@@ -356,16 +424,3 @@ def compliance_report(payload: ComplianceReportIn, request: Request | None = Non
             },
         )
     return response
-
-
-@app.get("/v1/audit/recent", dependencies=[Depends(require_api_key)])
-def audit_recent(limit: int = 50, event_type: str | None = None) -> dict:
-    if not config.audit_enabled:
-        raise HTTPException(status_code=503, detail="audit trail is disabled")
-    bounded_limit = min(max(limit, 1), 250)
-    entries = _audit_log.fetch_recent(limit=bounded_limit, event_type=event_type)
-    return {
-        "total_entries": _audit_log.count(),
-        "returned": len(entries),
-        "entries": [entry.__dict__ for entry in entries],
-    }

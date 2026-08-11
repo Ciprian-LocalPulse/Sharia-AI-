@@ -14,6 +14,7 @@ security.py — طبقة الأمان الأساسية للواجهة البرم
 
 from __future__ import annotations
 
+import hashlib
 import hmac
 import threading
 import time
@@ -95,7 +96,8 @@ def client_identifier(request: Request) -> str:
     """يستخدم مفتاح API إن وُجد (لتحديد أدق)، وإلا عنوان IP للعميل."""
     api_key = request.headers.get("X-API-Key")
     if api_key:
-        return f"key:{api_key}"
+        fingerprint = hashlib.sha256(api_key.encode("utf-8")).hexdigest()[:12]
+        return f"key:{fingerprint}"
     client = request.client
     return f"ip:{client.host}" if client else "ip:unknown"
 
