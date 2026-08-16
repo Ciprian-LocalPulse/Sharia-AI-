@@ -1,0 +1,35 @@
+{
+    "name": "sharia-ai/php-sdk",
+    "description": "Client PHP oficial pentru API-ul REST Sharia-AI (screening acțiuni, detecție riba/gharar/maysir, calcul zakat, raport de conformitate).",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["sharia", "fintech", "islamic-finance", "zakat", "compliance", "api-client"],
+    "authors": [
+        {
+            "name": "Ciprian Ștefan Pleșca"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "ShariaAi\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ShariaAi\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit --testdox",
+        "test:coverage": "phpunit --coverage-text"
+    },
+    "minimum-stability": "stable"
+}
