@@ -9,27 +9,13 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/status-beta-yellow.svg)](#)
-[![Tests](https://img.shields.io/badge/tests-156%20passing-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-184%20passing-brightgreen.svg)](#)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#)
 [![Standard](https://img.shields.io/badge/aligned%20with-AAOIFI%20%2F%20DJIM%20%2F%20FTSE%20Shariah-1b4332.svg)](#)
 
 **المؤلف: Ciprian Ștefan Pleșca**
 
 </div>
-
----
-
-## Production API Controls
-
-For public deployment, copy `.env.example` and set at least:
-
-- `SHARIA_AI_API_KEYS` for API-key authentication on decision endpoints.
-- `SHARIA_AI_CORS_ALLOWED_ORIGINS` for explicit browser origins.
-- `SHARIA_AI_RATE_LIMIT_PER_MINUTE` to bound per-client request volume.
-- `SHARIA_AI_MAX_CONTRACT_CHARS` to reject oversized contract payloads.
-- `SHARIA_AI_AUDIT_LOG_PATH` to persist compliance decisions in SQLite.
-
-The legacy endpoints remain available, and versioned aliases are exposed under `/v1/...` for backward-compatible API evolution.
 
 ---
 
@@ -114,13 +100,23 @@ sharia-fintech-ai/
 │   │   └── compliance_pipeline.py
 │   ├── audit/                # سجلّ تدقيق دائم (SQLite، append-only منطقيًا)
 │   │   └── audit_log.py
-│   ├── api/                 # واجهة REST (FastAPI): مصادقة، تحديد معدّل، CORS
+│   ├── data/                 # نماذج بيانات ومزوّدو معلومات مالية خارجية
+│   │   ├── models.py
+│   │   └── providers/
+│   │       └── base.py       # واجهة أساسية لمزوّدي البيانات (قابلة للتوسيع)
+│   ├── governance/            # آليات مراجعة/حوكمة إضافية لقرارات الامتثال
+│   │   └── review.py
+│   ├── policies/               # تعريف منهجيات الفحص كسياسات قابلة للتهيئة
+│   │   └── methodology.py
+│   ├── api/                 # واجهة REST (FastAPI): مصادقة، تدقيق، مراقبة
 │   │   ├── main.py
-│   │   └── security.py
+│   │   ├── security.py       # مصادقة عبر مفتاح API + تحديد معدّل الطلبات
+│   │   ├── audit.py           # نقاط نهاية متعلقة بسجلّ التدقيق
+│   │   └── observability.py   # مراقبة/قياسات تشغيلية إضافية
 │   └── utils/
 │       ├── config.py         # تهيئة مركزية (بما فيها إعدادات الأمان)
 │       └── logging_setup.py  # تسجيل منظَّم بصيغة JSON
-├── tests/                   # 156 اختبارًا وحدويًا/تكامليًا، تغطية 100%
+├── tests/                   # 184 اختبارًا وحدويًا/تكامليًا، تغطية 100%
 ├── data/
 │   ├── sample/               # عقود وأسهم نموذجية
 │   └── rules/                # حدود AAOIFI بصيغة YAML (مرجع خارجي)
@@ -135,17 +131,19 @@ sharia-fintech-ai/
 └── .github/workflows/ci.yml
 ```
 
+> **ملاحظة على البنية:** الوحدات `data/`، `governance/`، و`policies/` (داخل `src/sharia_ai/`)، وكذلك `api/audit.py` و`api/observability.py`، أُضيفت مؤخرًا إلى المستودع. توثيقها التفصيلي (الغرض الدقيق، وكيفية تفاعلها مع بقية خط الأنابيب) قيد المراجعة والإكمال في تحديث لاحق لهذا الملف — لتفادي وصف غير دقيق لسلوك لم يُراجَع بعد سطرًا بسطر.
+
 ### الأمان وجاهزية الإنتاج (منذ 0.2.0)
 
 الواجهة البرمجية REST محمية افتراضيًا بـ:
 - **مصادقة عبر مفتاح API** (رأس `X-API-Key`، مقارنة بزمن ثابت) — عطِّلها فقط محليًا بترك `SHARIA_AI_API_KEYS` فارغًا.
-- **تحديد معدّل الطلبات** لكل عميل (قابل للتهيئة عبر `SHARIA_AI_RATE_LIMIT_*`).
+- **تحديد معدّل الطلبات** لكل عميل (قابل للتهيئة عبر `SHARIA_AI_RATE_LIMIT_REQUESTS` و`SHARIA_AI_RATE_LIMIT_WINDOW_SECONDS`).
 - **CORS صريح** (بلا `*` افتراضي) — يُفعَّل فقط بضبط `SHARIA_AI_CORS_ORIGINS`.
-- **حدود حجم للمُدخلات** لمنع هجمات DoS عبر نصوص عقود ضخمة.
+- **حدود حجم للمُدخلات** لمنع هجمات DoS عبر نصوص عقود ضخمة (`SHARIA_AI_MAX_CONTRACT_CHARS`).
 - **تسجيل منظَّم (JSON)** مع معرِّف طلب فريد لكل استدعاء.
-- **سجلّ تدقيق دائم (SQLite)** لكل قرار امتثال، عبر `/v1/audit/recent` (محمي).
+- **سجلّ تدقيق دائم (SQLite)** لكل قرار امتثال، عبر `/v1/audit/recent` (محمي)، بمسار قابل للتهيئة عبر `SHARIA_AI_AUDIT_DB_PATH`.
 
-راجع [`SECURITY.md`](./SECURITY.md) للنموذج الكامل وحدوده المعروفة، و[`.env.example`](./.env.example) لكل متغيرات البيئة القابلة للضبط قبل النشر.
+راجع [`SECURITY.md`](./SECURITY.md) للنموذج الكامل وحدوده المعروفة، و[`.env.example`](./.env.example) لكل متغيرات البيئة القابلة للضبط قبل النشر — وهو المرجع الوحيد المعتمَد لأسماء متغيرات البيئة الفعلية المستخدَمة في الكود.
 
 ---
 
@@ -269,6 +267,7 @@ print(report.summary())
 - [x] خط أنابيب التنسيق + واجهة REST
 - [x] مصادقة عبر مفتاح API + تحديد معدّل الطلبات + CORS صريح
 - [x] تسجيل منظَّم (JSON) + سجلّ تدقيق دائم (SQLite)
+- [ ] توثيق كامل لوحدات `data/`, `governance/`, `policies/` المُضافة حديثًا
 - [ ] دمج نموذج محوّل (AraBERT مُعاد ضبطه) للتقييم الدلالي
 - [ ] دعم التكافل (التأمين الإسلامي) والصكوك (السندات الإسلامية)
 - [ ] لوحة تحكّم ويب لتصوّر تقارير الامتثال
